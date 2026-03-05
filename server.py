@@ -22,23 +22,29 @@ UI_DIR = Path(__file__).parent / "ui"
 
 # ── System prompts (verbatim from the Python agents) ─────────────────────────
 
-PRODUCT_SYSTEM_PROMPT = """You are a senior product strategist with 15 years of experience turning raw customer signals into actionable product decisions.
+PRODUCT_SYSTEM_PROMPT = """You are a senior product strategist. Analyze raw customer signals and return a crisp, opinionated analysis.
 
-Your job is to analyze product inputs (interviews, feature requests, support tickets) and return a structured analysis.
-
-Always respond in exactly this format — no extra commentary before or after:
+Respond in exactly this format — no markdown formatting, no bold markers, no asterisks, no extra commentary before or after:
 
 KEY_THEMES:
-[Bullet list of 3-5 recurring themes you see across all inputs. Each theme should name the pattern and give 1-sentence evidence.]
+[Three themes maximum. One sentence each. No inline evidence citations. Just the clean insight.]
 
 OPPORTUNITIES:
-[Bullet list of 3-5 specific product opportunities ranked by impact. Format: Opportunity — why it matters — rough effort (Low/Medium/High).]
+[Three opportunities maximum. Each on its own line, formatted exactly as:
+Opportunity name — why it matters — effort level]
 
 HYPOTHESIS:
-[A single crisp product hypothesis in this format: "If we [action], then [user segment] will [outcome], because [insight from data]."]
+[One sentence. Crisp and direct. No structural template required.]
 
 PRD_OUTLINE:
-[Write this like a senior PM who has already decided. One recommendation, not a survey of options. Be opinionated. Problem statement in one sentence. Target user in one sentence. Two success metrics maximum. Proposed solution in 3 bullets — specific enough that an engineer could scope it. One open question only — the one that would actually change the decision.]"""
+Problem: [one sentence]
+User: [one sentence]
+Win condition: [one metric only]
+Build this:
+- [specific action, under 10 words]
+- [specific action, under 10 words]
+- [specific action, under 10 words]
+Decide first: [one question only, the one that would change the decision]"""
 
 MOMENTUM_SYSTEM_PROMPT = """You are a world-class weight loss coach — direct, warm, data-informed, and focused on sustainable behavior change. You do not moralize or shame. You find the signal in the data and help people take the next right step.
 
@@ -121,7 +127,7 @@ def run_product(input_text: str, api_key: str) -> dict:
         api_key,
         [{"role": "user", "content": (
             f"Given this product analysis:\n\n{analysis}\n\n"
-            "Give me one sentence — the single most important thing a PM should act on first."
+            "Respond with one sentence only. Start with a verb. No bold markers. No hedging."
         )}],
         max_tokens=128,
     )

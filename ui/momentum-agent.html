@@ -4,21 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Momentum</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #faf7f2;
-      --surface: #f0ece4;
-      --border: #ddd6ca;
-      --border-2: #c8c0b4;
-      --text: #2a2318;
-      --text-2: #7a6c5a;
-      --text-3: #b5a898;
-      --green:    #1b5c2e;
-      --amber:    #7a4d06;
-      --red:      #7a1d1d;
-      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --bg:          #faf7f2;
+      --surface:     #f0ece4;
+      --border:      #ddd6ca;
+      --border-2:    #c8c0b4;
+      --text:        #2a2318;
+      --text-2:      #7a6c5a;
+      --text-3:      #b5a898;
+      --green:       #1b5c2e;
+      --green-mid:   #2a7d3f;
+      --amber:       #7a4d06;
+      --amber-mid:   #9a6208;
+      --red:         #7a1d1d;
+      --red-mid:     #9a2525;
+      --font:        -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --font-brand:  'Fraunces', Georgia, serif;
     }
 
     body {
@@ -28,7 +35,8 @@
       font-size: 14px;
       line-height: 1.65;
       min-height: 100vh;
-      padding: 0 20px 80px;
+      padding: 0 18px 100px;
+      -webkit-font-smoothing: antialiased;
     }
 
     .container {
@@ -38,60 +46,74 @@
 
     /* ── Header ── */
     header {
-      padding: 52px 0 40px;
+      padding: 44px 0 32px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
 
     header h1 {
-      font-size: 22px;
+      font-family: var(--font-brand);
+      font-size: 40px;
       font-weight: 700;
       letter-spacing: -0.03em;
       color: var(--text);
+      line-height: 1.0;
+      margin-bottom: 6px;
     }
 
     header p {
       font-size: 13px;
       color: var(--text-3);
-      margin-top: 4px;
+      letter-spacing: 0.01em;
     }
 
     /* ── Streak Alert ── */
     .streak-alert {
       display: none;
       background: #fdf0d8;
-      border-left: 3px solid #c4790c;
+      border: 1px solid #e8c682;
+      border-left: 4px solid #c4790c;
       color: #7a4d06;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
-      padding: 13px 16px;
+      padding: 14px 18px;
       margin-bottom: 32px;
-      border-radius: 0 3px 3px 0;
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
-    /* ── Form ── */
+    /* ── Form — mobile-first: 1 column ── */
     .form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px 28px;
-      margin-bottom: 24px;
+      grid-template-columns: 1fr;
+      gap: 28px;
+      margin-bottom: 28px;
     }
 
-    .field { display: flex; flex-direction: column; gap: 8px; }
+    /* 2-column on wider screens */
+    @media (min-width: 520px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 28px 32px;
+      }
+    }
+
+    .field { display: flex; flex-direction: column; gap: 10px; }
     .field.full { grid-column: 1 / -1; }
 
     .field-label {
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-3);
     }
 
-    .field-sublabel { font-size: 11px; color: var(--text-2); margin-top: -4px; }
+    .field-sublabel {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: -6px;
+    }
 
-    /* Notes label row with mic button */
     .notes-label-row {
       display: flex;
       align-items: center;
@@ -103,68 +125,88 @@
       border: 1px solid var(--border);
       color: var(--text);
       font-family: var(--font);
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 500;
       letter-spacing: -0.02em;
-      padding: 14px 16px;
-      border-radius: 3px;
+      padding: 16px 18px;
+      border-radius: 4px;
       outline: none;
       width: 100%;
       -moz-appearance: textfield;
-      transition: border-color 0.12s;
+      transition: border-color 0.14s, box-shadow 0.14s;
     }
 
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-    input[type="number"]:focus { border-color: var(--border-2); }
+
+    input[type="number"]:focus {
+      border-color: var(--border-2);
+      box-shadow: 0 0 0 3px rgba(42, 35, 24, 0.06);
+    }
 
     /* ── Sliders ── */
-    .slider-wrap { display: flex; flex-direction: column; gap: 12px; }
+    .slider-wrap { display: flex; flex-direction: column; gap: 14px; }
 
-    .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
 
     .slider-value {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 600;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
       color: var(--text);
-      min-width: 56px;
+      min-width: 64px;
       text-align: right;
     }
 
     input[type="range"] {
       -webkit-appearance: none;
+      appearance: none;
       width: 100%;
-      height: 3px;
-      background: linear-gradient(to right, var(--text) 0%, var(--text) var(--fill, 80%), var(--border) var(--fill, 80%), var(--border) 100%);
-      border-radius: 3px;
+      height: 4px;
+      background: linear-gradient(
+        to right,
+        var(--text) 0%,
+        var(--text) var(--fill, 80%),
+        var(--border) var(--fill, 80%),
+        var(--border) 100%
+      );
+      border-radius: 4px;
       outline: none;
       cursor: pointer;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
+      width: 26px;
+      height: 26px;
       background: var(--text);
       border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(42,35,24,0.25);
-      transition: transform 0.1s, box-shadow 0.1s;
+      box-shadow: 0 2px 7px rgba(42, 35, 24, 0.22);
+      transition: transform 0.12s, box-shadow 0.12s;
     }
 
     input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
-      box-shadow: 0 2px 8px rgba(42,35,24,0.3);
+      transform: scale(1.12);
+      box-shadow: 0 3px 12px rgba(42, 35, 24, 0.3);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.2);
     }
 
     input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
+      width: 26px;
+      height: 26px;
       background: var(--text);
       border-radius: 50%;
       border: none;
       cursor: pointer;
+      box-shadow: 0 2px 7px rgba(42, 35, 24, 0.22);
     }
 
     /* ── Notes ── */
@@ -175,22 +217,27 @@
       color: var(--text);
       font-family: var(--font);
       font-size: 14px;
-      line-height: 1.7;
+      line-height: 1.72;
       padding: 16px 18px;
       resize: vertical;
-      min-height: 100px;
+      min-height: 108px;
       outline: none;
-      border-radius: 3px;
-      transition: border-color 0.12s;
+      border-radius: 4px;
+      transition: border-color 0.14s, box-shadow 0.14s;
     }
 
-    textarea:focus { border-color: var(--border-2); }
+    textarea:focus {
+      border-color: var(--border-2);
+      box-shadow: 0 0 0 3px rgba(42, 35, 24, 0.06);
+    }
+
     textarea::placeholder { color: var(--text-3); }
 
-    /* ── Voice Input ── */
+    /* ── Voice mic ── */
     .mic-btn {
-      width: 28px;
-      height: 28px;
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 50%;
@@ -202,19 +249,21 @@
       position: relative;
       padding: 0;
       flex-shrink: 0;
-      transition: color 0.12s, border-color 0.12s;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .mic-btn:hover { color: var(--text-2); border-color: var(--border-2); }
-    .mic-btn.recording { color: #c0392b; border-color: #c0392b; }
-    .mic-btn svg { width: 12px; height: 12px; }
+    .mic-btn.recording { color: #c0392b; border-color: #c0392b; background: rgba(192, 57, 43, 0.07); }
+    .mic-btn svg { width: 16px; height: 16px; }
 
     .mic-dot {
       position: absolute;
       top: -2px;
       right: -2px;
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       background: #c0392b;
       border-radius: 50%;
       border: 2px solid var(--bg);
@@ -224,11 +273,11 @@
 
     @keyframes mic-pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.35; transform: scale(0.75); }
+      50%       { opacity: 0.3; transform: scale(0.7); }
     }
 
     /* ── Submit ── */
-    .form-footer { margin-top: 8px; }
+    .form-footer { margin-top: 4px; }
 
     button.primary {
       background: var(--text);
@@ -237,15 +286,22 @@
       font-family: var(--font);
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.07em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      padding: 13px 28px;
+      padding: 16px 28px;
       cursor: pointer;
-      border-radius: 3px;
+      border-radius: 4px;
       transition: opacity 0.12s;
+      width: 100%;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
-    button.primary:hover { opacity: 0.75; }
+    @media (min-width: 520px) {
+      button.primary { width: auto; }
+    }
+
+    button.primary:hover { opacity: 0.78; }
     button.primary:disabled { opacity: 0.25; cursor: not-allowed; }
 
     /* ── Error ── */
@@ -254,11 +310,10 @@
       margin-top: 20px;
       padding: 14px 18px;
       background: #fef0ee;
-      border-left: 3px solid #c0392b;
+      border-left: 4px solid #c0392b;
       font-size: 13px;
       color: #8b2020;
       line-height: 1.55;
-      border-radius: 0 3px 3px 0;
     }
 
     .error-msg.active { display: block; }
@@ -274,25 +329,31 @@
     }
 
     .loading.active { display: flex; }
-    .dot-pulse { display: flex; gap: 4px; align-items: center; }
+
+    .dot-pulse { display: flex; gap: 5px; align-items: center; }
 
     .dot-pulse span {
       width: 5px;
       height: 5px;
       background: var(--text-3);
       border-radius: 50%;
-      animation: pulse 1.2s ease-in-out infinite;
+      animation: dot-fade 1.3s ease-in-out infinite;
     }
 
     .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
     .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
 
-    @keyframes pulse {
-      0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
-      40% { opacity: 1; transform: scale(1); }
+    @keyframes dot-fade {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40%            { opacity: 1;   transform: scale(1);   }
     }
 
-    /* ── Results ── */
+    /* ── Results — fade in from below ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     .results {
       display: none;
       margin-top: 52px;
@@ -300,51 +361,105 @@
       padding-top: 48px;
     }
 
-    .results.active { display: block; }
-
-    /* STATUS — hero block */
-    .status-block {
-      margin-bottom: 48px;
-      padding: 32px 36px 28px;
-      border-radius: 3px;
+    .results.active {
+      display: block;
+      animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .status-block.on-track  { background: var(--green); }
-    .status-block.drifting  { background: var(--amber); }
-    .status-block.off-track { background: var(--red); }
+    /* ── STATUS — hero block with drama ── */
+    .status-block {
+      margin-bottom: 48px;
+      padding: 36px 32px 30px;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle diagonal stripe texture */
+    .status-block::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -52deg,
+        transparent,
+        transparent 22px,
+        rgba(255, 255, 255, 0.03) 22px,
+        rgba(255, 255, 255, 0.03) 23px
+      );
+      pointer-events: none;
+    }
+
+    .status-block.on-track {
+      background: radial-gradient(
+        ellipse at 20% 20%,
+        var(--green-mid) 0%,
+        var(--green)     50%,
+        #124020          100%
+      );
+    }
+
+    .status-block.drifting {
+      background: radial-gradient(
+        ellipse at 20% 20%,
+        var(--amber-mid) 0%,
+        var(--amber)     50%,
+        #583704          100%
+      );
+    }
+
+    .status-block.off-track {
+      background: radial-gradient(
+        ellipse at 20% 20%,
+        var(--red-mid) 0%,
+        var(--red)     50%,
+        #561414        100%
+      );
+    }
 
     .status-eyebrow {
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.52);
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
     }
 
     .status-value {
-      font-size: 52px;
-      font-weight: 800;
-      letter-spacing: -0.04em;
+      font-family: var(--font-brand);
+      font-size: 54px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
       line-height: 1;
       color: #fff;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (min-width: 520px) {
+      .status-value { font-size: 72px; }
     }
 
     .status-desc {
       font-size: 14px;
-      color: rgba(255,255,255,0.8);
-      line-height: 1.55;
-      max-width: 440px;
+      color: rgba(255, 255, 255, 0.76);
+      line-height: 1.6;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Sections */
+    /* ── Result sections ── */
     .section { margin-bottom: 36px; }
 
     .block-label {
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-3);
       margin-bottom: 12px;
@@ -354,18 +469,18 @@
       font-size: 16px;
       font-weight: 500;
       color: var(--text);
-      line-height: 1.5;
-      padding: 18px 20px;
+      line-height: 1.55;
+      padding: 20px 22px;
       background: #fff;
-      border-left: 2px solid var(--text);
+      border-left: 3px solid var(--text);
       letter-spacing: -0.01em;
-      border-radius: 0 3px 3px 0;
+      border-radius: 0 4px 4px 0;
     }
 
     .drift-signal { font-size: 14px; color: var(--text); line-height: 1.65; }
     .drift-signal.none { color: var(--text-3); }
 
-    .encouragement { font-size: 14px; color: var(--text-2); line-height: 1.75; }
+    .encouragement { font-size: 15px; color: var(--text-2); line-height: 1.78; }
 
     .adjusted-plan { display: none; }
     .adjusted-plan.visible { display: block; }
@@ -373,10 +488,10 @@
     .plan-list { list-style: none; border-top: 1px solid var(--border); }
 
     .plan-list li {
-      padding: 13px 0;
+      padding: 14px 0;
       border-bottom: 1px solid var(--border);
       font-size: 14px;
-      line-height: 1.55;
+      line-height: 1.58;
       color: var(--text);
       display: flex;
       gap: 12px;
@@ -390,9 +505,9 @@
       margin: 0 0 36px;
     }
 
-    /* ── Dashboard Panel ── */
+    /* ── Dashboard ── */
     .dashboard {
-      margin-top: 48px;
+      margin-top: 52px;
       border-top: 1px solid var(--border);
     }
 
@@ -401,17 +516,19 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 18px 0;
+      padding: 20px 0;
       background: none;
       border: none;
       cursor: pointer;
       font-family: var(--font);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-3);
       transition: color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .dashboard-toggle:hover { color: var(--text-2); }
@@ -425,30 +542,20 @@
 
     .dashboard-toggle.open svg { transform: rotate(180deg); }
 
-    .dashboard-body {
-      display: none;
-      padding-bottom: 48px;
-    }
-
+    .dashboard-body { display: none; padding-bottom: 52px; }
     .dashboard-body.open { display: block; }
 
-    .db-empty {
-      font-size: 13px;
-      color: var(--text-3);
-      padding: 8px 0 16px;
-    }
+    .db-empty { font-size: 13px; color: var(--text-3); padding: 8px 0 16px; }
 
-    .db-streak-wrap {
-      margin-bottom: 28px;
-    }
+    .db-streak-wrap { margin-bottom: 32px; }
 
     .db-stat-label {
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-3);
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
     .db-streak-val {
@@ -456,13 +563,33 @@
       font-weight: 700;
       letter-spacing: -0.02em;
       color: var(--text);
+      line-height: 1.2;
     }
 
+    /* 3+ day streak — more celebratory */
+    .db-streak-val.celebrating {
+      font-family: var(--font-brand);
+      font-size: 28px;
+      color: var(--green);
+    }
+
+    /* 7+ day streak — very celebratory */
+    .db-streak-val.fire {
+      font-family: var(--font-brand);
+      font-size: 34px;
+      color: var(--green);
+    }
+
+    /* Sparklines: stack on mobile, side-by-side on wider */
     .db-charts {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      grid-template-columns: 1fr;
+      gap: 24px;
       margin-bottom: 28px;
+    }
+
+    @media (min-width: 520px) {
+      .db-charts { grid-template-columns: 1fr 1fr; gap: 20px; }
     }
 
     .db-chart-label {
@@ -471,27 +598,29 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-3);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
-    .db-chart svg { display: block; overflow: visible; }
+    /* SVGs scale to fill container width */
+    .db-chart svg { display: block; overflow: visible; width: 100%; height: auto; }
 
     .db-timeline { border-top: 1px solid var(--border); }
 
     .db-entry {
       display: flex;
       align-items: flex-start;
-      gap: 11px;
-      padding: 11px 0;
+      gap: 12px;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border);
+      min-width: 0;
     }
 
     .db-dot {
-      width: 9px;
-      height: 9px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       flex-shrink: 0;
-      margin-top: 3px;
+      margin-top: 4px;
     }
 
     .db-dot.on-track  { background: var(--green); }
@@ -500,11 +629,7 @@
 
     .db-entry-meta { flex: 1; min-width: 0; }
 
-    .db-entry-date {
-      font-size: 11px;
-      color: var(--text-3);
-      margin-bottom: 1px;
-    }
+    .db-entry-date { font-size: 11px; color: var(--text-3); margin-bottom: 2px; }
 
     .db-entry-summary {
       font-size: 13px;
@@ -512,12 +637,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    @media (max-width: 480px) {
-      .form-grid { grid-template-columns: 1fr; }
-      .status-value { font-size: 38px; }
-      .db-charts { grid-template-columns: 1fr; }
+      max-width: 100%;
     }
   </style>
 </head>
@@ -529,7 +649,6 @@
       <p>Daily check-in. One next step.</p>
     </header>
 
-    <!-- Streak at risk alert (shown on load if last 2 check-ins were rough) -->
     <div class="streak-alert" id="streak-alert">
       ⚠ Streak at risk — you've had 2 rough check-ins. Today matters.
     </div>
@@ -600,7 +719,7 @@
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                 <line x1="12" y1="19" x2="12" y2="23"/>
-                <line x1="8" y1="23" x2="16" y2="23"/>
+                <line x1="8"  y1="23" x2="16" y2="23"/>
               </svg>
               <span class="mic-dot" id="mic-dot"></span>
             </button>
@@ -659,7 +778,6 @@
       </div>
     </div>
 
-    <!-- Dashboard Panel -->
     <div class="dashboard" id="dashboard">
       <button class="dashboard-toggle" id="dashboard-toggle" type="button" onclick="toggleDashboard()">
         <span>Your Progress</span>
@@ -669,7 +787,6 @@
       </button>
       <div class="dashboard-body" id="dashboard-body"></div>
     </div>
-
   </div>
 
   <script>
@@ -696,12 +813,12 @@
     // ── Check-in ─────────────────────────────────────────────────────────────
 
     function buildPrompt() {
-      const cw  = parseFloat(document.getElementById('current-weight').value);
-      const gw  = parseFloat(document.getElementById('goal-weight').value);
-      const di  = parseInt(document.getElementById('days-in').value);
-      const def = parseInt(document.getElementById('deficit').value);
-      const adh = parseInt(document.getElementById('adherence').value);
-      const mot = parseInt(document.getElementById('motivation').value);
+      const cw    = parseFloat(document.getElementById('current-weight').value);
+      const gw    = parseFloat(document.getElementById('goal-weight').value);
+      const di    = parseInt(document.getElementById('days-in').value);
+      const def   = parseInt(document.getElementById('deficit').value);
+      const adh   = parseInt(document.getElementById('adherence').value);
+      const mot   = parseInt(document.getElementById('motivation').value);
       const notes = document.getElementById('notes').value.trim();
 
       const expected = ((di * def) / 3500).toFixed(1);
@@ -744,7 +861,6 @@
         const parsed = parseResponse(data.result);
         render(parsed);
 
-        // Save to localStorage and refresh dashboard
         saveCheckin({
           date:       new Date().toISOString().split('T')[0],
           weight:     parseFloat(document.getElementById('current-weight').value),
@@ -799,8 +915,8 @@
 
       const lc = statusWord.toLowerCase();
       let statusClass = 'on-track';
-      if (lc.includes('drift')) statusClass = 'drifting';
-      else if (lc.includes('off')) statusClass = 'off-track';
+      if (lc.includes('drift'))     statusClass = 'drifting';
+      else if (lc.includes('off'))  statusClass = 'off-track';
 
       return {
         statusWord, statusClass, desc,
@@ -821,7 +937,9 @@
 
       const driftEl = document.getElementById('drift-signal');
       driftEl.textContent = d.driftSignal;
-      driftEl.className   = d.driftSignal.toLowerCase().startsWith('none') ? 'drift-signal none' : 'drift-signal';
+      driftEl.className   = d.driftSignal.toLowerCase().startsWith('none')
+        ? 'drift-signal none'
+        : 'drift-signal';
 
       document.getElementById('encouragement').textContent = d.encouragement;
 
@@ -847,9 +965,8 @@
     const MAX_ENTRIES = 90;
 
     function loadCheckins() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      } catch { return []; }
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
     }
 
     function saveCheckin(entry) {
@@ -874,9 +991,9 @@
 
     // ── Voice Input ───────────────────────────────────────────────────────────
 
-    let recognition  = null;
-    let isRecording  = false;
-    let voiceBase    = '';  // textarea content at recording start + finalized speech
+    let recognition = null;
+    let isRecording = false;
+    let voiceBase   = '';
 
     function initVoice() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -905,7 +1022,6 @@
         ta.value = voiceBase + interim;
       };
 
-      // Browser auto-stops on silence — restart if still recording
       recognition.onend = () => {
         if (isRecording) {
           try { recognition.start(); } catch (e) { stopVoice(); }
@@ -913,10 +1029,7 @@
       };
 
       recognition.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-          stopVoice();
-        }
-        // 'no-speech' and 'audio-capture' resolve through onend → restart
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') stopVoice();
       };
     }
 
@@ -929,12 +1042,7 @@
       isRecording = true;
       voiceBase   = document.getElementById('notes').value;
       if (voiceBase.length && !voiceBase.endsWith(' ')) voiceBase += ' ';
-      try {
-        recognition.start();
-      } catch (e) {
-        isRecording = false;
-        return;
-      }
+      try { recognition.start(); } catch (e) { isRecording = false; return; }
       document.getElementById('mic-btn').classList.add('recording');
       document.getElementById('mic-dot').style.display = 'block';
     }
@@ -966,7 +1074,6 @@
     }
 
     function formatDate(dateStr) {
-      // Parse as local date to avoid UTC offset shifting the day
       const [, m, d] = dateStr.split('-').map(Number);
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       return `${months[m - 1]} ${d}`;
@@ -975,9 +1082,8 @@
     function sparklineSVG(values, color) {
       const W = 120, H = 36, PAD = 3;
       if (values.length < 2) {
-        const cx = W / 2, cy = H / 2;
         return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-          <circle cx="${cx}" cy="${cy}" r="3" fill="${color}" opacity="0.5"/>
+          <circle cx="${W/2}" cy="${H/2}" r="3" fill="${color}" opacity="0.5"/>
         </svg>`;
       }
       const min   = Math.min(...values);
@@ -1014,13 +1120,22 @@
       const streak = countStreak(history);
       const last7  = history.slice(-7);
 
-      // Sparkline data — only entries that have the field
       const weights     = last7.filter(e => e.weight     != null).map(e => e.weight);
       const motivations = last7.filter(e => e.motivation != null).map(e => e.motivation);
 
-      const streakLabel = streak > 0
-        ? `🔥 ${streak} day${streak > 1 ? 's' : ''} on track`
-        : 'No current streak';
+      // Streak label — more celebratory at 3+ and 7+ days
+      let streakLabel, streakExtra = '';
+      if (streak >= 7) {
+        streakLabel = `🔥🔥🔥 ${streak} day streak`;
+        streakExtra = 'fire';
+      } else if (streak >= 3) {
+        streakLabel = `🔥 ${streak} day streak`;
+        streakExtra = 'celebrating';
+      } else if (streak > 0) {
+        streakLabel = `${streak} day${streak > 1 ? 's' : ''} on track`;
+      } else {
+        streakLabel = 'No current streak';
+      }
 
       const weightChart = weights.length >= 2
         ? sparklineSVG(weights, '#1b5c2e')
@@ -1045,8 +1160,8 @@
 
       body.innerHTML = `
         <div class="db-streak-wrap">
-          <div class="db-stat-label">Streak</div>
-          <div class="db-streak-val">${streakLabel}</div>
+          <div class="db-stat-label">Current Streak</div>
+          <div class="db-streak-val ${streakExtra}">${streakLabel}</div>
         </div>
         <div class="db-charts">
           <div class="db-chart">
