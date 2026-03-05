@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f6f3;
+      --surface: #efece7;
+      --border: #dedad4;
+      --border-2: #c8c4bc;
+      --text: #1c1b19;
+      --text-2: #5e5b56;
+      --text-3: #a8a49e;
+      --accent: #c4790c;
+      --accent-bg: #fdf3e3;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.65;
+      min-height: 100vh;
+      padding: 0 20px 80px;
+    }
+
+    .container {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    /* ── Settings ── */
+    .settings-wrap {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 50;
+    }
+
+    .settings-btn {
+      width: 34px;
+      height: 34px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      transition: color 0.12s, border-color 0.12s;
+      position: relative;
+      padding: 0;
+    }
+
+    .settings-btn:hover { color: var(--text-2); border-color: var(--border-2); }
+    .settings-btn svg { width: 15px; height: 15px; }
+
+    .settings-btn.key-set::after {
+      content: '';
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      width: 9px;
+      height: 9px;
+      background: #1b5c2e;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+
+    .settings-panel {
+      position: absolute;
+      top: 44px;
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 20px;
+      width: 284px;
+      box-shadow: 0 4px 24px rgba(28,27,25,0.1);
+      display: none;
+    }
+
+    .settings-panel.open { display: block; }
+
+    .settings-panel .s-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .settings-panel input[type="password"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 10px 12px;
+      outline: none;
+      border-radius: 2px;
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+      transition: border-color 0.12s;
+    }
+
+    .settings-panel input[type="password"]:focus { border-color: var(--border-2); }
+
+    .s-hint {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 6px;
+    }
+
+    .s-hint.ok { color: #1b5c2e; }
+
+    /* ── Header ── */
+    header {
+      padding: 56px 0 44px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    header span {
+      font-size: 13px;
+      color: var(--text-3);
+    }
+
+    /* ── Input ── */
+    .field { margin-bottom: 16px; }
+
+    .field-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 18px 20px;
+      resize: vertical;
+      min-height: 220px;
+      outline: none;
+      border-radius: 2px;
+      transition: border-color 0.12s;
+      -webkit-appearance: none;
+    }
+
+    textarea:focus { border-color: var(--border-2); }
+    textarea::placeholder { color: var(--text-3); }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-top: 6px;
+    }
+
+    button.primary {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 12px 26px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: opacity 0.12s;
+    }
+
+    button.primary:hover { opacity: 0.75; }
+    button.primary:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    .hint { font-size: 12px; color: var(--text-3); }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      margin-top: 20px;
+      padding: 14px 18px;
+      background: #fef0ee;
+      border-left: 3px solid #c0392b;
+      font-size: 13px;
+      color: #8b2020;
+      line-height: 1.55;
+    }
+
+    .error-msg.active { display: block; }
+
+    /* ── Loading ── */
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-3);
+      font-size: 13px;
+      margin-top: 36px;
+    }
+
+    .loading.active { display: flex; }
+    .dot-pulse { display: flex; gap: 4px; align-items: center; }
+
+    .dot-pulse span {
+      width: 5px;
+      height: 5px;
+      background: var(--text-3);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Results ── */
+    .results { display: none; margin-top: 56px; }
+    .results.active { display: block; }
+
+    .tldr-block {
+      background: var(--accent-bg);
+      border-left: 3px solid var(--accent);
+      padding: 26px 30px;
+      margin-bottom: 56px;
+    }
+
+    .tldr-block .block-label {
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .tldr-text {
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+      letter-spacing: -0.025em;
+    }
+
+    .section { margin-bottom: 50px; }
+
+    .block-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 16px;
+    }
+
+    .item-list { list-style: none; border-top: 1px solid var(--border); }
+
+    .item-list li {
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text);
+      display: flex;
+      gap: 14px;
+    }
+
+    .item-list li::before {
+      content: '—';
+      color: var(--text-3);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .hypothesis-text {
+      font-size: 16px;
+      font-style: italic;
+      color: var(--text-2);
+      padding: 20px 24px;
+      background: #fff;
+      border-left: 2px solid var(--border-2);
+      line-height: 1.65;
+    }
+
+    .prd-table {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .prd-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .prd-row:last-child { border-bottom: none; }
+
+    .prd-key {
+      padding: 16px 18px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .prd-val {
+      padding: 16px 20px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    .prd-val ul { list-style: none; padding: 0; }
+
+    .prd-val ul li { padding: 3px 0 3px 16px; position: relative; }
+
+    .prd-val ul li::before {
+      content: '·';
+      position: absolute;
+      left: 4px;
+      color: var(--text-3);
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 0 50px;
+    }
+
+    @media (max-width: 560px) {
+      header { flex-direction: column; gap: 6px; }
+      .prd-row { grid-template-columns: 1fr; }
+      .prd-key { border-right: none; border-bottom: 1px solid var(--border); }
+      .tldr-text { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Settings -->
+  <div class="settings-wrap" id="settings-wrap">
+    <button class="settings-btn" id="settings-btn" onclick="toggleSettings()" title="Set API Key">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <div class="settings-panel" id="settings-panel">
+      <span class="s-label">Anthropic API Key</span>
+      <input type="password" id="settings-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+      <button class="primary" onclick="saveKey()">Save</button>
+      <div class="s-hint" id="s-hint"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Product Agent</h1>
+      <span>Paste raw signals. Get a decision.</span>
+    </header>
+
+    <div class="field">
+      <label class="field-label" for="inputs">Product Inputs</label>
+      <textarea
+        id="inputs"
+        placeholder="Paste customer interviews, feature requests, support tickets, sales call notes, NPS responses…"
+      ></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="analyze-btn" onclick="analyze()">Analyze</button>
+      <span class="hint">Returns KEY_THEMES · OPPORTUNITIES · HYPOTHESIS · PRD_OUTLINE</span>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="loading" id="loading">
+      <div class="dot-pulse"><span></span><span></span><span></span></div>
+      <span>Analyzing inputs…</span>
+    </div>
+
+    <div class="results" id="results">
+      <div class="tldr-block">
+        <div class="block-label">TL;DR</div>
+        <div class="tldr-text" id="tldr"></div>
+      </div>
+
+      <div class="section">
+        <div class="block-label">Key Themes</div>
+        <ul class="item-list" id="themes-list"></ul>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="section">
+        <div class="block-label">Opportunities</div>
+        <ul class="item-list" id="opportunities-list"></ul>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="section">
+        <div class="block-label">Hypothesis</div>
+        <div class="hypothesis-text" id="hypothesis"></div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="section">
+        <div class="block-label">PRD Outline</div>
+        <div class="prd-table" id="prd-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let API_KEY = null;
+
+    // ── Settings ──────────────────────────────────────────────────────────────
+
+    function toggleSettings() {
+      const panel = document.getElementById('settings-panel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) {
+        document.getElementById('settings-key').focus();
+      }
+    }
+
+    function saveKey() {
+      const val = document.getElementById('settings-key').value.trim();
+      if (!val) return;
+      API_KEY = val;
+      document.getElementById('settings-btn').classList.add('key-set');
+      document.getElementById('settings-key').value = '';
+      const hint = document.getElementById('s-hint');
+      hint.textContent = 'Key saved for this session';
+      hint.className = 's-hint ok';
+      setTimeout(() => {
+        document.getElementById('settings-panel').classList.remove('open');
+        hint.textContent = '';
+      }, 1200);
+    }
+
+    document.addEventListener('click', e => {
+      const wrap = document.getElementById('settings-wrap');
+      if (!wrap.contains(e.target)) {
+        document.getElementById('settings-panel').classList.remove('open');
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.getElementById('settings-panel').classList.remove('open');
+      if (e.key === 'Enter' && document.getElementById('settings-panel').classList.contains('open')) saveKey();
+    });
+
+    // ── Analyze ───────────────────────────────────────────────────────────────
+
+    async function analyze() {
+      if (!API_KEY) {
+        showError('No API key set — click the ⚙ icon to add one.');
+        document.getElementById('settings-panel').classList.add('open');
+        document.getElementById('settings-key').focus();
+        return;
+      }
+
+      const input = document.getElementById('inputs').value.trim();
+      if (!input) { document.getElementById('inputs').focus(); return; }
+
+      const btn     = document.getElementById('analyze-btn');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const errorEl = document.getElementById('error-msg');
+
+      btn.disabled = true;
+      loading.classList.add('active');
+      results.classList.remove('active');
+      errorEl.classList.remove('active');
+
+      try {
+        const resp = await fetch('http://localhost:8000/api/analyze', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ type: 'product', input, apiKey: API_KEY }),
+        });
+
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || `Server error ${resp.status}`);
+
+        render(parseAnalysis(data.result), data.tldr);
+        loading.classList.remove('active');
+        results.classList.add('active');
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        loading.classList.remove('active');
+        showError(err.message.includes('fetch') ? 'Could not reach server — is server.py running? (python3 server.py)' : `Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('active');
+    }
+
+    // ── Parsing ───────────────────────────────────────────────────────────────
+
+    function parseAnalysis(text) {
+      const sections = {};
+      const re = /\*{0,2}(KEY_THEMES|OPPORTUNITIES|HYPOTHESIS|PRD_OUTLINE)\*{0,2}:?\*{0,2}([\s\S]*?)(?=\n\*{0,2}(?:KEY_THEMES|OPPORTUNITIES|HYPOTHESIS|PRD_OUTLINE)\*{0,2}:|$)/g;
+      let m;
+      while ((m = re.exec(text)) !== null) sections[m[1]] = m[2].trim();
+
+      function parseBullets(str) {
+        return str.split('\n')
+          .map(l => l.replace(/^[-•*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+          .filter(Boolean);
+      }
+
+      return {
+        themes:        parseBullets(sections['KEY_THEMES']    || ''),
+        opportunities: parseBullets(sections['OPPORTUNITIES'] || ''),
+        hypothesis:    (sections['HYPOTHESIS'] || '').replace(/^["""'']|["""'']$/g, '').trim(),
+        prd:           parsePRD(sections['PRD_OUTLINE'] || ''),
+      };
+    }
+
+    function parsePRD(text) {
+      const defs = [
+        { key: 'Problem Statement', re: /problem\s+statement[:\s–—]+(.+?)(?=target\s+user|success\s+metrics|proposed\s+solution|open\s+question|$)/is },
+        { key: 'Target User',       re: /target\s+user[:\s–—]+(.+?)(?=problem\s+statement|success\s+metrics|proposed\s+solution|open\s+question|$)/is },
+        { key: 'Success Metrics',   re: /success\s+metrics[:\s–—]+([\s\S]+?)(?=problem\s+statement|target\s+user|proposed\s+solution|open\s+question|$)/i },
+        { key: 'Proposed Solution', re: /proposed\s+solution[:\s–—]+([\s\S]+?)(?=problem\s+statement|target\s+user|success\s+metrics|open\s+question|$)/i },
+        { key: 'Open Question',     re: /open\s+question[:\s–—]+(.+?)(?=problem\s+statement|target\s+user|success\s+metrics|proposed\s+solution|$)/is },
+      ];
+
+      const rows = [];
+      for (const { key, re } of defs) {
+        const match = text.match(re);
+        if (!match) continue;
+        const raw   = match[1].trim();
+        const lines = raw.split('\n')
+          .map(l => l.replace(/^[-•*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+          .filter(Boolean);
+        rows.push(lines.length > 1 ? { key, val: lines, isList: true } : { key, val: raw });
+      }
+
+      if (rows.length === 0) rows.push({ key: 'PRD Outline', val: text });
+      return rows;
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+
+    function render(data, tldr) {
+      document.getElementById('tldr').textContent = tldr;
+
+      document.getElementById('themes-list').innerHTML =
+        data.themes.map(t => `<li>${esc(t)}</li>`).join('');
+
+      document.getElementById('opportunities-list').innerHTML =
+        data.opportunities.map(o => `<li>${esc(o)}</li>`).join('');
+
+      document.getElementById('hypothesis').textContent = data.hypothesis;
+
+      document.getElementById('prd-table').innerHTML = data.prd.map(row => {
+        const valHtml = row.isList
+          ? `<ul>${row.val.map(v => `<li>${esc(v)}</li>`).join('')}</ul>`
+          : esc(row.val);
+        return `<div class="prd-row"><div class="prd-key">${esc(row.key)}</div><div class="prd-val">${valHtml}</div></div>`;
+      }).join('');
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

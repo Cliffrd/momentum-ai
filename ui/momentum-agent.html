@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Momentum</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf7f2;
+      --surface: #f0ece4;
+      --border: #ddd6ca;
+      --border-2: #c8c0b4;
+      --text: #2a2318;
+      --text-2: #7a6c5a;
+      --text-3: #b5a898;
+      --green:    #1b5c2e;
+      --amber:    #7a4d06;
+      --red:      #7a1d1d;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.65;
+      min-height: 100vh;
+      padding: 0 20px 80px;
+    }
+
+    .container {
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    /* ── Settings ── */
+    .settings-wrap {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 50;
+    }
+
+    .settings-btn {
+      width: 34px;
+      height: 34px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      transition: color 0.12s, border-color 0.12s;
+      position: relative;
+      padding: 0;
+    }
+
+    .settings-btn:hover { color: var(--text-2); border-color: var(--border-2); }
+    .settings-btn svg { width: 15px; height: 15px; }
+
+    .settings-btn.key-set::after {
+      content: '';
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      width: 9px;
+      height: 9px;
+      background: var(--green);
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+
+    .settings-panel {
+      position: absolute;
+      top: 44px;
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 20px;
+      width: 280px;
+      box-shadow: 0 4px 24px rgba(42,35,24,0.1);
+      display: none;
+    }
+
+    .settings-panel.open { display: block; }
+
+    .settings-panel .s-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .settings-panel input[type="password"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 10px 12px;
+      outline: none;
+      border-radius: 3px;
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+      transition: border-color 0.12s;
+    }
+
+    .settings-panel input[type="password"]:focus { border-color: var(--border-2); }
+
+    .s-hint { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+    .s-hint.ok { color: var(--green); }
+
+    /* ── Header ── */
+    header {
+      padding: 52px 0 40px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    /* ── Form ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px 28px;
+      margin-bottom: 24px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field.full { grid-column: 1 / -1; }
+
+    .field-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .field-sublabel { font-size: 11px; color: var(--text-2); margin-top: -4px; }
+
+    input[type="number"] {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      padding: 14px 16px;
+      border-radius: 3px;
+      outline: none;
+      width: 100%;
+      -moz-appearance: textfield;
+      transition: border-color 0.12s;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus { border-color: var(--border-2); }
+
+    /* ── Sliders ── */
+    .slider-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+    .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
+
+    .slider-value {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      min-width: 56px;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(to right, var(--text) 0%, var(--text) var(--fill, 80%), var(--border) var(--fill, 80%), var(--border) 100%);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--text);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(42,35,24,0.25);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 2px 8px rgba(42,35,24,0.3);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--text);
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ── Notes ── */
+    textarea {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 16px 18px;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      border-radius: 3px;
+      transition: border-color 0.12s;
+    }
+
+    textarea:focus { border-color: var(--border-2); }
+    textarea::placeholder { color: var(--text-3); }
+
+    /* ── Submit ── */
+    .form-footer { margin-top: 8px; }
+
+    button.primary {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 13px 28px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: opacity 0.12s;
+    }
+
+    button.primary:hover { opacity: 0.75; }
+    button.primary:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      margin-top: 20px;
+      padding: 14px 18px;
+      background: #fef0ee;
+      border-left: 3px solid #c0392b;
+      font-size: 13px;
+      color: #8b2020;
+      line-height: 1.55;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .error-msg.active { display: block; }
+
+    /* ── Loading ── */
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-3);
+      font-size: 13px;
+      margin-top: 36px;
+    }
+
+    .loading.active { display: flex; }
+    .dot-pulse { display: flex; gap: 4px; align-items: center; }
+
+    .dot-pulse span {
+      width: 5px;
+      height: 5px;
+      background: var(--text-3);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Results ── */
+    .results {
+      display: none;
+      margin-top: 52px;
+      border-top: 1px solid var(--border);
+      padding-top: 48px;
+    }
+
+    .results.active { display: block; }
+
+    /* STATUS — hero block */
+    .status-block {
+      margin-bottom: 48px;
+      padding: 32px 36px 28px;
+      border-radius: 3px;
+    }
+
+    .status-block.on-track  { background: var(--green); }
+    .status-block.drifting  { background: var(--amber); }
+    .status-block.off-track { background: var(--red); }
+
+    .status-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 8px;
+    }
+
+    .status-value {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .status-desc {
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.55;
+      max-width: 440px;
+    }
+
+    /* Sections */
+    .section { margin-bottom: 36px; }
+
+    .block-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 12px;
+    }
+
+    .daily-action {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.5;
+      padding: 18px 20px;
+      background: #fff;
+      border-left: 2px solid var(--text);
+      letter-spacing: -0.01em;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .drift-signal { font-size: 14px; color: var(--text); line-height: 1.65; }
+    .drift-signal.none { color: var(--text-3); }
+
+    .encouragement { font-size: 14px; color: var(--text-2); line-height: 1.75; }
+
+    .adjusted-plan { display: none; }
+    .adjusted-plan.visible { display: block; }
+
+    .plan-list { list-style: none; border-top: 1px solid var(--border); }
+
+    .plan-list li {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text);
+      display: flex;
+      gap: 12px;
+    }
+
+    .plan-list li::before { content: '—'; color: var(--text-3); flex-shrink: 0; }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 0 36px;
+    }
+
+    @media (max-width: 480px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .status-value { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Settings -->
+  <div class="settings-wrap" id="settings-wrap">
+    <button class="settings-btn" id="settings-btn" onclick="toggleSettings()" title="Set API Key">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <div class="settings-panel" id="settings-panel">
+      <span class="s-label">Anthropic API Key</span>
+      <input type="password" id="settings-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+      <button class="primary" onclick="saveKey()">Save</button>
+      <div class="s-hint" id="s-hint"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Momentum</h1>
+      <p>Daily check-in. One next step.</p>
+    </header>
+
+    <form onsubmit="checkin(event)">
+      <div class="form-grid">
+        <div class="field">
+          <span class="field-label">Current Weight</span>
+          <span class="field-sublabel">lbs</span>
+          <input type="number" id="current-weight" value="191" min="50" max="500" step="0.1">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Goal Weight</span>
+          <span class="field-sublabel">lbs</span>
+          <input type="number" id="goal-weight" value="175" min="50" max="500" step="0.1">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Days In</span>
+          <span class="field-sublabel">since start</span>
+          <input type="number" id="days-in" value="19" min="1" max="365">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Daily Deficit Target</span>
+          <span class="field-sublabel">calories</span>
+          <input type="number" id="deficit" value="500" min="100" max="1000" step="50">
+        </div>
+
+        <div class="field full">
+          <span class="field-label">Adherence</span>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="field-sublabel">% of days fully on plan</span>
+              <span class="slider-value" id="adherence-val">80%</span>
+            </div>
+            <input
+              type="range"
+              id="adherence"
+              min="0" max="100" value="80"
+              oninput="updateSlider(this, 'adherence-val', v => v + '%')"
+            >
+          </div>
+        </div>
+
+        <div class="field full">
+          <span class="field-label">Motivation Level</span>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="field-sublabel">how you're feeling today</span>
+              <span class="slider-value" id="motivation-val">7/10</span>
+            </div>
+            <input
+              type="range"
+              id="motivation"
+              min="1" max="10" value="7"
+              oninput="updateSlider(this, 'motivation-val', v => v + '/10')"
+            >
+          </div>
+        </div>
+
+        <div class="field full">
+          <span class="field-label">Notes</span>
+          <textarea
+            id="notes"
+            placeholder="What happened today? Be honest."
+          >Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself.</textarea>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="primary" id="checkin-btn" type="submit">Check In</button>
+      </div>
+    </form>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="loading" id="loading">
+      <div class="dot-pulse"><span></span><span></span><span></span></div>
+      <span>Reading your check-in…</span>
+    </div>
+
+    <div class="results" id="results">
+      <div class="status-block" id="status-block">
+        <div class="status-eyebrow">Status</div>
+        <div class="status-value" id="status-value"></div>
+        <div class="status-desc"  id="status-desc"></div>
+      </div>
+
+      <div class="section">
+        <div class="block-label">Today's Action</div>
+        <div class="daily-action" id="daily-action"></div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="section">
+        <div class="block-label">Drift Signal</div>
+        <div class="drift-signal" id="drift-signal"></div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="section">
+        <div class="block-label">Coach</div>
+        <div class="encouragement" id="encouragement"></div>
+      </div>
+
+      <div class="adjusted-plan" id="adjusted-plan">
+        <hr class="section-divider">
+        <div class="section">
+          <div class="block-label">Adjusted Plan — Next 7 Days</div>
+          <ul class="plan-list" id="plan-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let API_KEY = null;
+
+    // ── Settings ──────────────────────────────────────────────────────────────
+
+    function toggleSettings() {
+      const panel = document.getElementById('settings-panel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) document.getElementById('settings-key').focus();
+    }
+
+    function saveKey() {
+      const val = document.getElementById('settings-key').value.trim();
+      if (!val) return;
+      API_KEY = val;
+      document.getElementById('settings-btn').classList.add('key-set');
+      document.getElementById('settings-key').value = '';
+      const hint = document.getElementById('s-hint');
+      hint.textContent = 'Key saved for this session';
+      hint.className = 's-hint ok';
+      setTimeout(() => {
+        document.getElementById('settings-panel').classList.remove('open');
+        hint.textContent = '';
+      }, 1200);
+    }
+
+    document.addEventListener('click', e => {
+      if (!document.getElementById('settings-wrap').contains(e.target))
+        document.getElementById('settings-panel').classList.remove('open');
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.getElementById('settings-panel').classList.remove('open');
+      if (e.key === 'Enter' && document.getElementById('settings-panel').classList.contains('open')) saveKey();
+    });
+
+    // ── Sliders ───────────────────────────────────────────────────────────────
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initSlider(document.getElementById('adherence'));
+      initSlider(document.getElementById('motivation'));
+    });
+
+    function initSlider(el) {
+      const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+      el.style.setProperty('--fill', pct + '%');
+    }
+
+    function updateSlider(el, labelId, fmt) {
+      initSlider(el);
+      document.getElementById(labelId).textContent = fmt(el.value);
+    }
+
+    // ── Check-in ─────────────────────────────────────────────────────────────
+
+    function buildPrompt() {
+      const cw  = parseFloat(document.getElementById('current-weight').value);
+      const gw  = parseFloat(document.getElementById('goal-weight').value);
+      const di  = parseInt(document.getElementById('days-in').value);
+      const def = parseInt(document.getElementById('deficit').value);
+      const adh = parseInt(document.getElementById('adherence').value);
+      const mot = parseInt(document.getElementById('motivation').value);
+      const notes = document.getElementById('notes').value.trim();
+
+      const expected = ((di * def) / 3500).toFixed(1);
+
+      return `DAILY CHECK-IN:
+- Goal weight: ${gw} lbs
+- Current weight: ${cw} lbs
+- Pounds remaining to goal: ${cw - gw} lbs
+- Days in: ${di}
+- Planned daily calorie deficit: ${def} cals
+- Expected weight loss by now (if fully adherent): ${expected} lbs
+- Adherence: ${adh}% of days fully on plan
+- Motivation level: ${mot}/10
+- Notes: ${notes}`;
+    }
+
+    async function checkin(e) {
+      e.preventDefault();
+
+      if (!API_KEY) {
+        showError('No API key set — click the ⚙ icon to add one.');
+        document.getElementById('settings-panel').classList.add('open');
+        document.getElementById('settings-key').focus();
+        return;
+      }
+
+      const btn     = document.getElementById('checkin-btn');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const errorEl = document.getElementById('error-msg');
+
+      btn.disabled = true;
+      loading.classList.add('active');
+      results.classList.remove('active');
+      errorEl.classList.remove('active');
+
+      try {
+        const resp = await fetch('http://localhost:8000/api/analyze', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ type: 'momentum', input: buildPrompt(), apiKey: API_KEY }),
+        });
+
+        const data = await resp.json();
+        if (!resp.ok || data.error) throw new Error(data.error || `Server error ${resp.status}`);
+
+        render(parseResponse(data.result));
+        loading.classList.remove('active');
+        results.classList.add('active');
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        loading.classList.remove('active');
+        showError(err.message.includes('fetch') ? 'Could not reach server — is server.py running? (python3 server.py)' : `Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('active');
+    }
+
+    // ── Parsing ───────────────────────────────────────────────────────────────
+
+    function parseResponse(text) {
+      // STATUS line + following description sentence
+      const statusMatch = text.match(/\*{0,2}STATUS:\*{0,2}\s*(.+)/);
+      const statusLine  = statusMatch ? statusMatch[1].trim() : '';
+      const statusWord  = statusLine.split(/[.\n]/)[0].trim();
+
+      // Description = first non-blank line immediately after STATUS line
+      const descMatch = text.match(/\*{0,2}STATUS:\*{0,2}\s*.+\n([^\n]+)/);
+      const desc      = descMatch ? descMatch[1].trim() : '';
+
+      function section(key) {
+        const re = new RegExp(
+          `\\*{0,2}${key}:\\*{0,2}\\s*([\\s\\S]*?)(?=\\n\\*{0,2}(?:STATUS|DAILY_ACTION|DRIFT_SIGNAL|ENCOURAGEMENT|ADJUSTED_PLAN):|$)`
+        );
+        const m = text.match(re);
+        return m ? m[1].trim() : '';
+      }
+
+      const adjustedRaw = section('ADJUSTED_PLAN');
+      const plan = adjustedRaw
+        ? adjustedRaw.split('\n')
+            .map(l => l.replace(/^[-•*]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+            .filter(Boolean)
+        : [];
+
+      const lc = statusWord.toLowerCase();
+      let statusClass = 'on-track';
+      if (lc.includes('drift')) statusClass = 'drifting';
+      else if (lc.includes('off')) statusClass = 'off-track';
+
+      return {
+        statusWord, statusClass, desc,
+        dailyAction:  section('DAILY_ACTION'),
+        driftSignal:  section('DRIFT_SIGNAL'),
+        encouragement: section('ENCOURAGEMENT'),
+        plan,
+      };
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+
+    function render(d) {
+      document.getElementById('status-block').className = `status-block ${d.statusClass}`;
+      document.getElementById('status-value').textContent = d.statusWord;
+      document.getElementById('status-desc').textContent  = d.desc;
+      document.getElementById('daily-action').textContent = d.dailyAction;
+
+      const driftEl = document.getElementById('drift-signal');
+      driftEl.textContent = d.driftSignal;
+      driftEl.className   = d.driftSignal.toLowerCase().startsWith('none') ? 'drift-signal none' : 'drift-signal';
+
+      document.getElementById('encouragement').textContent = d.encouragement;
+
+      const planBlock = document.getElementById('adjusted-plan');
+      if (d.plan.length > 0) {
+        document.getElementById('plan-list').innerHTML =
+          d.plan.map(item => `<li>${esc(item)}</li>`).join('');
+        planBlock.classList.add('visible');
+      } else {
+        planBlock.classList.remove('visible');
+      }
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
