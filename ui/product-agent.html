@@ -35,94 +35,6 @@
       margin: 0 auto;
     }
 
-    /* ── Settings ── */
-    .settings-wrap {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 50;
-    }
-
-    .settings-btn {
-      width: 34px;
-      height: 34px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-3);
-      transition: color 0.12s, border-color 0.12s;
-      position: relative;
-      padding: 0;
-    }
-
-    .settings-btn:hover { color: var(--text-2); border-color: var(--border-2); }
-    .settings-btn svg { width: 15px; height: 15px; }
-
-    .settings-btn.key-set::after {
-      content: '';
-      position: absolute;
-      top: -1px;
-      right: -1px;
-      width: 9px;
-      height: 9px;
-      background: #1b5c2e;
-      border-radius: 50%;
-      border: 2px solid var(--bg);
-    }
-
-    .settings-panel {
-      position: absolute;
-      top: 44px;
-      right: 0;
-      background: #fff;
-      border: 1px solid var(--border);
-      padding: 20px;
-      width: 284px;
-      box-shadow: 0 4px 24px rgba(28,27,25,0.1);
-      display: none;
-    }
-
-    .settings-panel.open { display: block; }
-
-    .settings-panel .s-label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      margin-bottom: 8px;
-    }
-
-    .settings-panel input[type="password"] {
-      width: 100%;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 12px;
-      padding: 10px 12px;
-      outline: none;
-      border-radius: 2px;
-      margin-bottom: 10px;
-      letter-spacing: 0.03em;
-      transition: border-color 0.12s;
-    }
-
-    .settings-panel input[type="password"]:focus { border-color: var(--border-2); }
-
-    .s-hint {
-      font-size: 11px;
-      color: var(--text-3);
-      margin-top: 6px;
-    }
-
-    .s-hint.ok { color: #1b5c2e; }
-
     /* ── Header ── */
     header {
       padding: 56px 0 44px;
@@ -379,22 +291,6 @@
 </head>
 <body>
 
-  <!-- Settings -->
-  <div class="settings-wrap" id="settings-wrap">
-    <button class="settings-btn" id="settings-btn" onclick="toggleSettings()" title="Set API Key">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    </button>
-    <div class="settings-panel" id="settings-panel">
-      <span class="s-label">Anthropic API Key</span>
-      <input type="password" id="settings-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
-      <button class="primary" onclick="saveKey()">Save</button>
-      <div class="s-hint" id="s-hint"></div>
-    </div>
-  </div>
-
   <div class="container">
     <header>
       <h1>Product Agent</h1>
@@ -456,55 +352,9 @@
   </div>
 
   <script>
-    let API_KEY = null;
-
-    // ── Settings ──────────────────────────────────────────────────────────────
-
-    function toggleSettings() {
-      const panel = document.getElementById('settings-panel');
-      panel.classList.toggle('open');
-      if (panel.classList.contains('open')) {
-        document.getElementById('settings-key').focus();
-      }
-    }
-
-    function saveKey() {
-      const val = document.getElementById('settings-key').value.trim();
-      if (!val) return;
-      API_KEY = val;
-      document.getElementById('settings-btn').classList.add('key-set');
-      document.getElementById('settings-key').value = '';
-      const hint = document.getElementById('s-hint');
-      hint.textContent = 'Key saved for this session';
-      hint.className = 's-hint ok';
-      setTimeout(() => {
-        document.getElementById('settings-panel').classList.remove('open');
-        hint.textContent = '';
-      }, 1200);
-    }
-
-    document.addEventListener('click', e => {
-      const wrap = document.getElementById('settings-wrap');
-      if (!wrap.contains(e.target)) {
-        document.getElementById('settings-panel').classList.remove('open');
-      }
-    });
-
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') document.getElementById('settings-panel').classList.remove('open');
-      if (e.key === 'Enter' && document.getElementById('settings-panel').classList.contains('open')) saveKey();
-    });
-
     // ── Analyze ───────────────────────────────────────────────────────────────
 
     async function analyze() {
-      if (!API_KEY) {
-        showError('No API key set — click the ⚙ icon to add one.');
-        document.getElementById('settings-panel').classList.add('open');
-        document.getElementById('settings-key').focus();
-        return;
-      }
-
       const input = document.getElementById('inputs').value.trim();
       if (!input) { document.getElementById('inputs').focus(); return; }
 
@@ -519,10 +369,10 @@
       errorEl.classList.remove('active');
 
       try {
-        const resp = await fetch('http://localhost:8000/api/analyze', {
+        const resp = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ type: 'product', input, apiKey: API_KEY }),
+          body: JSON.stringify({ type: 'product', input }),
         });
 
         const data = await resp.json();
@@ -534,7 +384,7 @@
         results.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (err) {
         loading.classList.remove('active');
-        showError(err.message.includes('fetch') ? 'Could not reach server — is server.py running? (python3 server.py)' : `Error: ${err.message}`);
+        showError(`Error: ${err.message}`);
       } finally {
         btn.disabled = false;
       }
