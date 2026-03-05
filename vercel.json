@@ -1,0 +1,1 @@
+{"outputDirectory": "ui", "rewrites": [{"source": "/", "destination": "/product-agent.html"}]}
