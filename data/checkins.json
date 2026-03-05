@@ -1,0 +1,80 @@
+[
+  {
+    "date": "2026-03-04",
+    "checkin": {
+      "goal_weight_lbs": 175,
+      "current_weight_lbs": 192,
+      "days_in": 18,
+      "planned_daily_deficit_cals": 500,
+      "adherence_pct": 65,
+      "motivation_level": 4,
+      "notes": "Had a rough week at work. Skipped the gym 3 times. Eating was okay Mon-Wed but fell apart Thu-Sun at a family event. Still drinking water and sleeping better. Feeling a little discouraged but not ready to quit."
+    },
+    "status": ""
+  },
+  {
+    "date": "2026-03-04",
+    "checkin": {
+      "goal_weight_lbs": 175,
+      "current_weight_lbs": 192,
+      "days_in": 18,
+      "planned_daily_deficit_cals": 500,
+      "adherence_pct": 65,
+      "motivation_level": 4,
+      "notes": "Had a rough week at work. Skipped the gym 3 times. Eating was okay Mon-Wed but fell apart Thu-Sun at a family event. Still drinking water and sleeping better. Feeling a little discouraged but not ready to quit."
+    },
+    "status": "Drifting"
+  },
+  {
+    "date": "2026-03-04",
+    "checkin": {
+      "goal_weight_lbs": 175,
+      "current_weight_lbs": 191,
+      "days_in": 19,
+      "planned_daily_deficit_cals": 500,
+      "adherence_pct": 80,
+      "motivation_level": 7,
+      "notes": "Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself. Yesterday's check-in helped."
+    },
+    "status": "On track"
+  },
+  {
+    "date": "2026-03-04",
+    "checkin": {
+      "goal_weight_lbs": 175,
+      "current_weight_lbs": 191,
+      "days_in": 19,
+      "planned_daily_deficit_cals": 500,
+      "adherence_pct": 80,
+      "motivation_level": 7,
+      "notes": "Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself. Yesterday's check-in helped."
+    },
+    "status": "On track"
+  },
+  {
+    "date": "2026-03-05",
+    "checkin": {
+      "goal_weight_lbs": 175,
+      "current_weight_lbs": 191,
+      "days_in": 19,
+      "planned_daily_deficit_cals": 500,
+      "adherence_pct": 80,
+      "motivation_level": 7,
+      "notes": "Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself. Yesterday's check-in helped."
+    },
+    "status": "On track"
+  },
+  {
+    "date": "2026-03-05",
+    "checkin": {
+      "goal_weight_lbs": 175,
+      "current_weight_lbs": 191,
+      "days_in": 19,
+      "planned_daily_deficit_cals": 500,
+      "adherence_pct": 80,
+      "motivation_level": 7,
+      "notes": "Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself. Yesterday's check-in helped."
+    },
+    "status": "Drifting"
+  }
+]
