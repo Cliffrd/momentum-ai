@@ -639,7 +639,7 @@
           const origIdx = total - 1 - i;
           return `<div class="history-card">
             <div class="h-date">${fmtDate(entry.date)}</div>
-            <div class="h-tldr">${esc(entry.tldr)}</div>
+            <div class="h-tldr">${esc(stripMd(entry.tldr))}</div>
             <button class="h-load" onclick="loadSnippet(${origIdx})">Load</button>
           </div>`;
         }).join('')
@@ -828,9 +828,11 @@
 
     function stripMd(str) {
       return String(str)
-        .replace(/\*\*/g, '')
-        .replace(/\*/g, '')
-        .replace(/^#+\s*/gm, '')
+        .replace(/\*\*/g, '')       // bold
+        .replace(/\*/g, '')         // italic
+        .replace(/`/g, '')          // backticks
+        .replace(/^#+\s*/gm, '')    // headers
+        .replace(/^-\s+/gm, '')     // leading dashes
         .trim();
     }
 

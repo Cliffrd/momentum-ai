@@ -931,22 +931,23 @@
 
     function render(d) {
       document.getElementById('status-block').className = `status-block ${d.statusClass}`;
-      document.getElementById('status-value').textContent = d.statusWord;
-      document.getElementById('status-desc').textContent  = d.desc;
-      document.getElementById('daily-action').textContent = d.dailyAction;
+      document.getElementById('status-value').textContent = stripMd(d.statusWord);
+      document.getElementById('status-desc').textContent  = stripMd(d.desc);
+      document.getElementById('daily-action').textContent = stripMd(d.dailyAction);
 
-      const driftEl = document.getElementById('drift-signal');
-      driftEl.textContent = d.driftSignal;
-      driftEl.className   = d.driftSignal.toLowerCase().startsWith('none')
+      const driftEl    = document.getElementById('drift-signal');
+      const driftClean = stripMd(d.driftSignal);
+      driftEl.textContent = driftClean;
+      driftEl.className   = driftClean.toLowerCase().startsWith('none')
         ? 'drift-signal none'
         : 'drift-signal';
 
-      document.getElementById('encouragement').textContent = d.encouragement;
+      document.getElementById('encouragement').textContent = stripMd(d.encouragement);
 
       const planBlock = document.getElementById('adjusted-plan');
       if (d.plan.length > 0) {
         document.getElementById('plan-list').innerHTML =
-          d.plan.map(item => `<li>${esc(item)}</li>`).join('');
+          d.plan.map(item => `<li>${esc(stripMd(item))}</li>`).join('');
         planBlock.classList.add('visible');
       } else {
         planBlock.classList.remove('visible');
@@ -957,6 +958,16 @@
       return String(str)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function stripMd(str) {
+      return String(str)
+        .replace(/\*\*/g, '')       // bold
+        .replace(/\*/g, '')         // italic
+        .replace(/`/g, '')          // backticks
+        .replace(/^#+\s*/gm, '')    // headers
+        .replace(/^-\s+/gm, '')     // leading dashes
+        .trim();
     }
 
     // ── localStorage ─────────────────────────────────────────────────────────
@@ -1148,7 +1159,7 @@
       const timelineHTML = [...last7].reverse().map(entry => {
         const cls     = statusClass(entry.status);
         const date    = formatDate(entry.date);
-        const summary = esc(entry.summary || entry.status || '');
+        const summary = esc(stripMd(entry.summary || entry.status || ''));
         return `<div class="db-entry">
           <div class="db-dot ${cls}"></div>
           <div class="db-entry-meta">
