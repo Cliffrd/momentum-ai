@@ -1032,8 +1032,18 @@
 
     // ── Auth ──────────────────────────────────────────────────────────────────
 
-    window.addEventListener('DOMContentLoaded', () => {
-      // Listen for auth state changes (handles session restore on reload)
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Explicitly check for an existing session on page load
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await loadCheckinsFromSupabase();
+        showApp();
+      } else {
+        showAuthScreen();
+      }
+
+      // Keep listener for future sign-in / sign-out changes
       sb.auth.onAuthStateChange(async (event, session) => {
         if (session) {
           currentUser = session.user;
