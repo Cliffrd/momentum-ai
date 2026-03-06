@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -27,11 +28,10 @@
       font-size: 14px;
       line-height: 1.4;
       min-height: 100vh;
-      padding: 0 20px 120px;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Top accent bar */
+    /* Top accent bar — always visible, above auth screen */
     body::before {
       content: '';
       display: block;
@@ -42,16 +42,133 @@
       z-index: 100;
     }
 
+    /* ── Auth Screen ── */
+    .auth-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 50;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      padding: 48px 20px 60px;
+    }
+
+    .auth-box {
+      max-width: 400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .auth-header {
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+
+    .auth-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .auth-header p {
+      font-size: 13px;
+      color: var(--text-3);
+    }
+
+    .auth-mode-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 20px;
+    }
+
+    .auth-fields { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+
+    .auth-field-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .auth-box input[type="email"],
+    .auth-box input[type="password"] {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 13px 16px;
+      outline: none;
+      transition: border-color 0.12s, box-shadow 0.12s;
+      -webkit-appearance: none;
+    }
+
+    .auth-box input[type="email"]:focus,
+    .auth-box input[type="password"]:focus {
+      border-color: var(--border-2);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .auth-box input::placeholder { color: var(--text-3); }
+
+    .auth-error {
+      display: none;
+      font-size: 13px;
+      color: #8b2020;
+      background: #fef0ee;
+      border-left: 3px solid #c0392b;
+      padding: 11px 14px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .auth-error.active { display: block; }
+
+    .auth-box .btn-analyze { width: 100%; margin-bottom: 16px; }
+
+    .auth-toggle {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    .auth-toggle a { color: var(--text-2); text-decoration: none; }
+    .auth-toggle a:hover { text-decoration: underline; }
+
+    /* ── Main App ── */
+    #app {
+      padding: 0 20px 120px;
+    }
+
     .container {
       max-width: 760px;
       margin: 0 auto;
     }
 
-    /* ── Header — compact to stay above the fold ── */
+    /* ── Header ── */
     header {
       padding: 32px 0 22px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-left {
       display: flex;
       align-items: baseline;
       gap: 16px;
@@ -69,6 +186,35 @@
       font-size: 13px;
       color: var(--text-3);
     }
+
+    .header-user {
+      text-align: right;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .header-email {
+      display: block;
+      font-size: 11px;
+      color: var(--text-3);
+      margin-bottom: 5px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .signout-link {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    .signout-link:hover { color: var(--text-2); }
 
     /* ── History Panel — compact, collapses to near-zero ── */
     .history-panel {
@@ -491,106 +637,303 @@
 </head>
 <body>
 
-  <div class="container">
-
-    <header>
-      <h1>Product Agent</h1>
-      <p>Paste raw signals. Get a decision.</p>
-    </header>
-
-    <!-- Previous Analyses — collapsed, zero height impact until opened -->
-    <div class="history-panel">
-      <button class="history-toggle" id="history-toggle"
-              aria-expanded="false" onclick="toggleHistory()">
-        <span class="toggle-arrow"></span>
-        <span id="history-label">Previous Analyses</span>
-      </button>
-      <div class="history-body" id="history-body"></div>
+  <!-- ── Auth Screen ── -->
+  <div class="auth-screen" id="auth-screen">
+    <div class="auth-box">
+      <div class="auth-header">
+        <h1>Product Agent</h1>
+        <p>Paste raw signals. Get a decision.</p>
+      </div>
+      <div class="auth-mode-label" id="auth-mode-label">Sign in to continue</div>
+      <div class="auth-fields">
+        <div>
+          <label class="auth-field-label" for="auth-email">Email</label>
+          <input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com">
+        </div>
+        <div>
+          <label class="auth-field-label" for="auth-password">Password</label>
+          <input type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <button class="btn-analyze" id="auth-submit-btn" onclick="handleAuth()">Sign In</button>
+      <div class="auth-toggle">
+        <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Create Account</a>
+      </div>
     </div>
+  </div>
 
-    <!-- Input — header + this must fit in 768px viewport -->
-    <div class="field">
-      <label class="field-label" for="inputs">Product Inputs</label>
-      <textarea
-        id="inputs"
-        placeholder="Paste customer interviews, feature requests, support tickets, sales call notes, NPS responses…"
-      ></textarea>
-    </div>
+  <!-- ── Main App ── -->
+  <div id="app" style="display:none">
+    <div class="container">
 
-    <div class="actions">
-      <button class="btn-analyze" id="analyze-btn" onclick="analyze()">Analyze</button>
-      <span class="action-hint">Returns KEY_THEMES · OPPORTUNITIES · HYPOTHESIS · PRD_OUTLINE</span>
-    </div>
+      <header>
+        <div class="header-left">
+          <h1>Product Agent</h1>
+          <p>Paste raw signals. Get a decision.</p>
+        </div>
+        <div class="header-user">
+          <span class="header-email" id="user-email"></span>
+          <a href="#" class="signout-link" onclick="handleSignOut(event)">Sign out</a>
+        </div>
+      </header>
 
-    <div class="error-msg" id="error-msg"></div>
-
-    <div class="loading" id="loading">
-      <div class="dot-pulse"><span></span><span></span><span></span></div>
-      <span>Analyzing inputs…</span>
-    </div>
-
-    <!-- Results appear below the fold — that's fine -->
-    <div class="results" id="results">
-
-      <div class="tldr-block">
-        <div class="tldr-eyebrow">The bottom line</div>
-        <div class="tldr-text" id="tldr"></div>
+      <!-- Previous Analyses — collapsed, zero height impact until opened -->
+      <div class="history-panel">
+        <button class="history-toggle" id="history-toggle"
+                aria-expanded="false" onclick="toggleHistory()">
+          <span class="toggle-arrow"></span>
+          <span id="history-label">Previous Analyses</span>
+        </button>
+        <div class="history-body" id="history-body"></div>
       </div>
 
-      <div class="results-body">
+      <!-- Input — header + this must fit in 768px viewport -->
+      <div class="field">
+        <label class="field-label" for="inputs">Product Inputs</label>
+        <textarea
+          id="inputs"
+          placeholder="Paste customer interviews, feature requests, support tickets, sales call notes, NPS responses…"
+        ></textarea>
+      </div>
 
-        <div class="result-section">
-          <div class="section-meta">
-            <div class="section-num">01</div>
-            <div class="section-title">Key Themes</div>
-          </div>
-          <div><ul class="item-list" id="themes-list"></ul></div>
+      <div class="actions">
+        <button class="btn-analyze" id="analyze-btn" onclick="analyze()">Analyze</button>
+        <span class="action-hint">Returns KEY_THEMES · OPPORTUNITIES · HYPOTHESIS · PRD_OUTLINE</span>
+      </div>
+
+      <div class="error-msg" id="error-msg"></div>
+
+      <div class="loading" id="loading">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        <span>Analyzing inputs…</span>
+      </div>
+
+      <!-- Results appear below the fold — that's fine -->
+      <div class="results" id="results">
+
+        <div class="tldr-block">
+          <div class="tldr-eyebrow">The bottom line</div>
+          <div class="tldr-text" id="tldr"></div>
         </div>
 
-        <div class="result-section">
-          <div class="section-meta">
-            <div class="section-num">02</div>
-            <div class="section-title">Opportunities</div>
-          </div>
-          <div><ul class="item-list" id="opportunities-list"></ul></div>
-        </div>
+        <div class="results-body">
 
-        <div class="result-section">
-          <div class="section-meta">
-            <div class="section-num">03</div>
-            <div class="section-title">Hypothesis</div>
+          <div class="result-section">
+            <div class="section-meta">
+              <div class="section-num">01</div>
+              <div class="section-title">Key Themes</div>
+            </div>
+            <div><ul class="item-list" id="themes-list"></ul></div>
           </div>
-          <div><div class="hypothesis-text" id="hypothesis"></div></div>
-        </div>
 
-        <div class="result-section">
-          <div class="section-meta">
-            <div class="section-num">04</div>
-            <div class="section-title">PRD Outline</div>
+          <div class="result-section">
+            <div class="section-meta">
+              <div class="section-num">02</div>
+              <div class="section-title">Opportunities</div>
+            </div>
+            <div><ul class="item-list" id="opportunities-list"></ul></div>
           </div>
-          <div><div class="prd-table" id="prd-table"></div></div>
-        </div>
 
+          <div class="result-section">
+            <div class="section-meta">
+              <div class="section-num">03</div>
+              <div class="section-title">Hypothesis</div>
+            </div>
+            <div><div class="hypothesis-text" id="hypothesis"></div></div>
+          </div>
+
+          <div class="result-section">
+            <div class="section-meta">
+              <div class="section-num">04</div>
+              <div class="section-title">PRD Outline</div>
+            </div>
+            <div><div class="prd-table" id="prd-table"></div></div>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ── Storage ───────────────────────────────────────────────────────────────
+    // ── Supabase ───────────────────────────────────────────────────────────────
+
+    const SUPABASE_URL = 'https://knedestzrnprdfqwjtow.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_Q-80ShxDZCjVWnDPy740_w_LwL2YniH';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser      = null;
+    let supabaseAnalyses = [];
+    let supabaseLoaded   = false;
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', () => {
+      sb.auth.onAuthStateChange(async (event, session) => {
+        if (session) {
+          currentUser = session.user;
+          await loadAnalysesFromSupabase();
+          showApp();
+        } else {
+          currentUser    = null;
+          supabaseLoaded = false;
+          supabaseAnalyses = [];
+          showAuthScreen();
+        }
+      });
+
+      // Allow Enter key on auth inputs
+      document.getElementById('auth-email').addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleAuth();
+      });
+      document.getElementById('auth-password').addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleAuth();
+      });
+    });
+
+    function showApp() {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('user-email').textContent = currentUser.email;
+
+      updateHistoryLabel();
+
+      const ta = document.getElementById('inputs');
+      ta.addEventListener('input', () => autoResize(ta));
+    }
+
+    function showAuthScreen() {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+    }
+
+    let isSignupMode = false;
+
+    function toggleAuthMode(e) {
+      e.preventDefault();
+      isSignupMode = !isSignupMode;
+      document.getElementById('auth-mode-label').textContent =
+        isSignupMode ? 'Create your account' : 'Sign in to continue';
+      document.getElementById('auth-submit-btn').textContent =
+        isSignupMode ? 'CREATE ACCOUNT' : 'SIGN IN';
+      document.getElementById('auth-toggle-link').textContent =
+        isSignupMode ? 'Already have an account? Sign in' : 'Create Account';
+      document.getElementById('auth-error').classList.remove('active');
+    }
+
+    async function handleAuth() {
+      const email    = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const errorEl  = document.getElementById('auth-error');
+      const btn      = document.getElementById('auth-submit-btn');
+
+      errorEl.classList.remove('active');
+      btn.disabled = true;
+
+      try {
+        let result;
+        if (isSignupMode) {
+          result = await sb.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: 'https://momentum-ai-vert.vercel.app/product-agent.html' },
+          });
+        } else {
+          result = await sb.auth.signInWithPassword({ email, password });
+        }
+
+        if (result.error) throw result.error;
+
+        if (isSignupMode && !result.data.session) {
+          errorEl.textContent = 'Check your email to confirm your account, then sign in.';
+          errorEl.style.color = '#2a6e3a';
+          errorEl.style.background = '#edf7f0';
+          errorEl.style.borderColor = '#2a7d3f';
+          errorEl.style.borderLeftColor = '#2a7d3f';
+          errorEl.classList.add('active');
+        }
+        // onAuthStateChange fires and calls showApp() when session is set
+      } catch (err) {
+        errorEl.style.color = '';
+        errorEl.style.background = '';
+        errorEl.style.borderColor = '';
+        errorEl.textContent = err.message || 'Authentication failed. Please try again.';
+        errorEl.classList.add('active');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function handleSignOut(e) {
+      e.preventDefault();
+      await sb.auth.signOut();
+      // onAuthStateChange fires and calls showAuthScreen()
+    }
+
+    // ── Supabase Data ─────────────────────────────────────────────────────────
+
+    async function loadAnalysesFromSupabase() {
+      if (!currentUser) return;
+      const { data, error } = await sb
+        .from('analyses')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) { console.error('Supabase load error:', error); return; }
+
+      // Map to internal format; reverse so array is chronological (oldest first)
+      supabaseAnalyses = (data || []).reverse().map(row => ({
+        date:          row.date,
+        tldr:          row.tldr,
+        key_themes:    row.key_themes || [],
+        input_snippet: row.input_snippet,
+        full_result:   row.full_result,
+      }));
+      supabaseLoaded = true;
+    }
+
+    async function saveAnalysisToSupabase(entry) {
+      const { error } = await sb.from('analyses').insert({
+        user_id:       currentUser.id,
+        date:          entry.date,
+        input_snippet: entry.input_snippet,
+        tldr:          entry.tldr,
+        key_themes:    entry.key_themes,
+        full_result:   entry.full_result,
+      });
+      if (error) console.error('Supabase save error:', error);
+    }
+
+    // ── Storage — Supabase primary, localStorage fallback ────────────────────
 
     const STORAGE_KEY = 'product_analyses';
     const MAX_STORED  = 10;
 
     function loadHistory() {
+      if (currentUser && supabaseLoaded) return supabaseAnalyses;
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
       catch { return []; }
     }
 
-    function saveAnalysis(entry) {
-      const history = loadHistory();
-      history.push(entry);
-      if (history.length > MAX_STORED) history.splice(0, history.length - MAX_STORED);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    async function saveAnalysis(entry) {
+      if (currentUser) {
+        await saveAnalysisToSupabase(entry);
+        await loadAnalysesFromSupabase();
+      } else {
+        // localStorage fallback when not logged in
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        history.push({
+          date:          entry.date,
+          tldr:          entry.tldr,
+          key_themes:    entry.key_themes,
+          input_snippet: entry.input_snippet,
+        });
+        if (history.length > MAX_STORED) history.splice(0, history.length - MAX_STORED);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      }
     }
 
     // ── History Panel ─────────────────────────────────────────────────────────
@@ -725,11 +1068,12 @@
         // Detect recurring before saving (avoids self-match)
         const recurring = getRecurringThemes(parsed.themes);
 
-        saveAnalysis({
+        await saveAnalysis({
           date:          new Date().toISOString().split('T')[0],
           tldr:          data.tldr.trim(),
           key_themes:    parsed.themes,
-          input_snippet: input.slice(0, 100),
+          input_snippet: input.slice(0, 150),
+          full_result:   data.result,
         });
 
         updateHistoryLabel();
@@ -775,7 +1119,6 @@
     }
 
     function parsePRD(text) {
-      // Matches new format: Problem / User / Win condition / Build this / Decide first
       const defs = [
         { key: 'Problem',       re: /problem[:\s–—]+(.+?)(?=\n(?:user|win condition|build this|decide first)[:\s]|$)/is },
         { key: 'User',          re: /user[:\s–—]+(.+?)(?=\n(?:problem|win condition|build this|decide first)[:\s]|$)/is },
@@ -805,7 +1148,7 @@
       document.getElementById('tldr').textContent = stripMd(tldr);
 
       document.getElementById('themes-list').innerHTML = data.themes.map(t => {
-        const badge = recurring.has(t)   // check with original key
+        const badge = recurring.has(t)
           ? `<span class="recurring-badge">Recurring</span>`
           : '';
         return `<li><span class="item-dot"></span><span>${esc(stripMd(t))}${badge}</span></li>`;
@@ -828,11 +1171,11 @@
 
     function stripMd(str) {
       return String(str)
-        .replace(/\*\*/g, '')       // bold
-        .replace(/\*/g, '')         // italic
-        .replace(/`/g, '')          // backticks
-        .replace(/^#+\s*/gm, '')    // headers
-        .replace(/^-\s+/gm, '')     // leading dashes
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/`/g, '')
+        .replace(/^#+\s*/gm, '')
+        .replace(/^-\s+/gm, '')
         .trim();
     }
 
@@ -848,15 +1191,6 @@
       el.style.height = 'auto';
       el.style.height = Math.max(el.scrollHeight, 144) + 'px';
     }
-
-    // ── Init ──────────────────────────────────────────────────────────────────
-
-    document.addEventListener('DOMContentLoaded', () => {
-      updateHistoryLabel();
-
-      const ta = document.getElementById('inputs');
-      ta.addEventListener('input', () => autoResize(ta));
-    });
   </script>
 </body>
 </html>
