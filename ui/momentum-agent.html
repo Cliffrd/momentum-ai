@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -35,8 +36,104 @@
       font-size: 14px;
       line-height: 1.65;
       min-height: 100vh;
-      padding: 0 18px 100px;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Auth Screen ── */
+    .auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 40px 18px;
+    }
+
+    .auth-box {
+      max-width: 360px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .auth-header {
+      margin-bottom: 40px;
+    }
+
+    .auth-header h1 {
+      font-family: var(--font-brand);
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.0;
+      margin-bottom: 6px;
+    }
+
+    .auth-header p {
+      font-size: 13px;
+      color: var(--text-3);
+      letter-spacing: 0.01em;
+    }
+
+    .auth-mode-label {
+      font-size: 13px;
+      color: var(--text-2);
+      margin-bottom: 28px;
+    }
+
+    .auth-fields { display: flex; flex-direction: column; gap: 20px; margin-bottom: 24px; }
+
+    .auth-box input[type="email"],
+    .auth-box input[type="password"] {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      padding: 14px 16px;
+      border-radius: 4px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.14s, box-shadow 0.14s;
+    }
+
+    .auth-box input[type="email"]:focus,
+    .auth-box input[type="password"]:focus {
+      border-color: var(--border-2);
+      box-shadow: 0 0 0 3px rgba(42, 35, 24, 0.06);
+    }
+
+    .auth-box input::placeholder { color: var(--text-3); }
+
+    .auth-error {
+      display: none;
+      font-size: 13px;
+      color: #8b2020;
+      background: #fef0ee;
+      border-left: 3px solid #c0392b;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .auth-error.active { display: block; }
+
+    .auth-box button.primary { width: 100%; margin-bottom: 20px; }
+
+    .auth-toggle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-3);
+    }
+
+    .auth-toggle a {
+      color: var(--text-2);
+      text-decoration: none;
+    }
+
+    .auth-toggle a:hover { text-decoration: underline; }
+
+    /* ── Main App ── */
+    #app {
+      padding: 0 18px 100px;
     }
 
     .container {
@@ -49,6 +146,13 @@
       padding: 44px 0 32px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 32px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
     }
 
     header h1 {
@@ -66,6 +170,35 @@
       color: var(--text-3);
       letter-spacing: 0.01em;
     }
+
+    .header-user {
+      text-align: right;
+      padding-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .header-email {
+      display: block;
+      font-size: 11px;
+      color: var(--text-3);
+      margin-bottom: 5px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .signout-link {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    .signout-link:hover { color: var(--text-2); }
 
     /* ── Streak Alert ── */
     .streak-alert {
@@ -643,162 +776,343 @@
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <h1>Momentum</h1>
-      <p>Daily check-in. One next step.</p>
-    </header>
-
-    <div class="streak-alert" id="streak-alert">
-      ⚠ Streak at risk — you've had 2 rough check-ins. Today matters.
+  <!-- ── Auth Screen ── -->
+  <div class="auth-screen" id="auth-screen">
+    <div class="auth-box">
+      <div class="auth-header">
+        <h1>Momentum</h1>
+        <p>Daily check-in. One next step.</p>
+      </div>
+      <div class="auth-mode-label" id="auth-mode-label">Sign in to continue</div>
+      <div class="auth-fields">
+        <div class="field">
+          <span class="field-label">Email</span>
+          <input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <span class="field-label">Password</span>
+          <input type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <button class="primary" id="auth-submit-btn" onclick="handleAuth()">Sign In</button>
+      <div class="auth-toggle">
+        <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Create Account</a>
+      </div>
     </div>
+  </div>
 
-    <form onsubmit="checkin(event)">
-      <div class="form-grid">
-        <div class="field">
-          <span class="field-label">Current Weight</span>
-          <span class="field-sublabel">lbs</span>
-          <input type="number" id="current-weight" value="191" min="50" max="500" step="0.1">
+  <!-- ── Main App ── -->
+  <div id="app" style="display:none">
+    <div class="container">
+      <header>
+        <div class="header-row">
+          <div>
+            <h1>Momentum</h1>
+            <p>Daily check-in. One next step.</p>
+          </div>
+          <div class="header-user">
+            <span class="header-email" id="user-email"></span>
+            <a href="#" class="signout-link" onclick="handleSignOut(event)">Sign out</a>
+          </div>
         </div>
+      </header>
 
-        <div class="field">
-          <span class="field-label">Goal Weight</span>
-          <span class="field-sublabel">lbs</span>
-          <input type="number" id="goal-weight" value="175" min="50" max="500" step="0.1">
-        </div>
+      <div class="streak-alert" id="streak-alert">
+        ⚠ Streak at risk — you've had 2 rough check-ins. Today matters.
+      </div>
 
-        <div class="field">
-          <span class="field-label">Days In</span>
-          <span class="field-sublabel">since start</span>
-          <input type="number" id="days-in" value="19" min="1" max="365">
-        </div>
+      <form onsubmit="checkin(event)">
+        <div class="form-grid">
+          <div class="field">
+            <span class="field-label">Current Weight</span>
+            <span class="field-sublabel">lbs</span>
+            <input type="number" id="current-weight" value="191" min="50" max="500" step="0.1">
+          </div>
 
-        <div class="field">
-          <span class="field-label">Daily Deficit Target</span>
-          <span class="field-sublabel">calories</span>
-          <input type="number" id="deficit" value="500" min="100" max="1000" step="50">
-        </div>
+          <div class="field">
+            <span class="field-label">Goal Weight</span>
+            <span class="field-sublabel">lbs</span>
+            <input type="number" id="goal-weight" value="175" min="50" max="500" step="0.1">
+          </div>
 
-        <div class="field full">
-          <span class="field-label">Adherence</span>
-          <div class="slider-wrap">
-            <div class="slider-header">
-              <span class="field-sublabel">% of days fully on plan</span>
-              <span class="slider-value" id="adherence-val">80%</span>
+          <div class="field">
+            <span class="field-label">Days In</span>
+            <span class="field-sublabel">since start</span>
+            <input type="number" id="days-in" value="19" min="1" max="365">
+          </div>
+
+          <div class="field">
+            <span class="field-label">Daily Deficit Target</span>
+            <span class="field-sublabel">calories</span>
+            <input type="number" id="deficit" value="500" min="100" max="1000" step="50">
+          </div>
+
+          <div class="field full">
+            <span class="field-label">Adherence</span>
+            <div class="slider-wrap">
+              <div class="slider-header">
+                <span class="field-sublabel">% of days fully on plan</span>
+                <span class="slider-value" id="adherence-val">80%</span>
+              </div>
+              <input
+                type="range"
+                id="adherence"
+                min="0" max="100" value="80"
+                oninput="updateSlider(this, 'adherence-val', v => v + '%')"
+              >
             </div>
-            <input
-              type="range"
-              id="adherence"
-              min="0" max="100" value="80"
-              oninput="updateSlider(this, 'adherence-val', v => v + '%')"
-            >
           </div>
-        </div>
 
-        <div class="field full">
-          <span class="field-label">Motivation Level</span>
-          <div class="slider-wrap">
-            <div class="slider-header">
-              <span class="field-sublabel">how you're feeling today</span>
-              <span class="slider-value" id="motivation-val">7/10</span>
+          <div class="field full">
+            <span class="field-label">Motivation Level</span>
+            <div class="slider-wrap">
+              <div class="slider-header">
+                <span class="field-sublabel">how you're feeling today</span>
+                <span class="slider-value" id="motivation-val">7/10</span>
+              </div>
+              <input
+                type="range"
+                id="motivation"
+                min="1" max="10" value="7"
+                oninput="updateSlider(this, 'motivation-val', v => v + '/10')"
+              >
             </div>
-            <input
-              type="range"
-              id="motivation"
-              min="1" max="10" value="7"
-              oninput="updateSlider(this, 'motivation-val', v => v + '/10')"
-            >
+          </div>
+
+          <div class="field full">
+            <div class="notes-label-row">
+              <span class="field-label">Notes</span>
+              <button class="mic-btn" id="mic-btn" type="button" onclick="toggleVoice()" title="Voice input">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8"  y1="23" x2="16" y2="23"/>
+                </svg>
+                <span class="mic-dot" id="mic-dot"></span>
+              </button>
+            </div>
+            <textarea
+              id="notes"
+              placeholder="What happened today? Be honest."
+            >Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself.</textarea>
           </div>
         </div>
 
-        <div class="field full">
-          <div class="notes-label-row">
-            <span class="field-label">Notes</span>
-            <button class="mic-btn" id="mic-btn" type="button" onclick="toggleVoice()" title="Voice input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="23"/>
-                <line x1="8"  y1="23" x2="16" y2="23"/>
-              </svg>
-              <span class="mic-dot" id="mic-dot"></span>
-            </button>
-          </div>
-          <textarea
-            id="notes"
-            placeholder="What happened today? Be honest."
-          >Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself.</textarea>
+        <div class="form-footer">
+          <button class="primary" id="checkin-btn" type="submit">Check In</button>
         </div>
+      </form>
+
+      <div class="error-msg" id="error-msg"></div>
+
+      <div class="loading" id="loading">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        <span>Reading your check-in…</span>
       </div>
 
-      <div class="form-footer">
-        <button class="primary" id="checkin-btn" type="submit">Check In</button>
-      </div>
-    </form>
+      <div class="results" id="results">
+        <div class="status-block" id="status-block">
+          <div class="status-eyebrow">Status</div>
+          <div class="status-value" id="status-value"></div>
+          <div class="status-desc"  id="status-desc"></div>
+        </div>
 
-    <div class="error-msg" id="error-msg"></div>
-
-    <div class="loading" id="loading">
-      <div class="dot-pulse"><span></span><span></span><span></span></div>
-      <span>Reading your check-in…</span>
-    </div>
-
-    <div class="results" id="results">
-      <div class="status-block" id="status-block">
-        <div class="status-eyebrow">Status</div>
-        <div class="status-value" id="status-value"></div>
-        <div class="status-desc"  id="status-desc"></div>
-      </div>
-
-      <div class="section">
-        <div class="block-label">Today's Action</div>
-        <div class="daily-action" id="daily-action"></div>
-      </div>
-
-      <hr class="section-divider">
-
-      <div class="section">
-        <div class="block-label">Drift Signal</div>
-        <div class="drift-signal" id="drift-signal"></div>
-      </div>
-
-      <hr class="section-divider">
-
-      <div class="section">
-        <div class="block-label">Coach</div>
-        <div class="encouragement" id="encouragement"></div>
-      </div>
-
-      <div class="adjusted-plan" id="adjusted-plan">
-        <hr class="section-divider">
         <div class="section">
-          <div class="block-label">Adjusted Plan — Next 7 Days</div>
-          <ul class="plan-list" id="plan-list"></ul>
+          <div class="block-label">Today's Action</div>
+          <div class="daily-action" id="daily-action"></div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="section">
+          <div class="block-label">Drift Signal</div>
+          <div class="drift-signal" id="drift-signal"></div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="section">
+          <div class="block-label">Coach</div>
+          <div class="encouragement" id="encouragement"></div>
+        </div>
+
+        <div class="adjusted-plan" id="adjusted-plan">
+          <hr class="section-divider">
+          <div class="section">
+            <div class="block-label">Adjusted Plan — Next 7 Days</div>
+            <ul class="plan-list" id="plan-list"></ul>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="dashboard" id="dashboard">
-      <button class="dashboard-toggle" id="dashboard-toggle" type="button" onclick="toggleDashboard()">
-        <span>Your Progress</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      <div class="dashboard-body" id="dashboard-body"></div>
+      <div class="dashboard" id="dashboard">
+        <button class="dashboard-toggle" id="dashboard-toggle" type="button" onclick="toggleDashboard()">
+          <span>Your Progress</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="dashboard-body" id="dashboard-body"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    // ── Sliders ───────────────────────────────────────────────────────────────
+    // ── Supabase ───────────────────────────────────────────────────────────────
+
+    const SUPABASE_URL = 'https://knedestzrnprdfqwjtow.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_Q-80ShxDZCjVWnDPy740_w_LwL2YniH';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+    let supabaseCheckins = [];
+    let supabaseLoaded = false;
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
 
     window.addEventListener('DOMContentLoaded', () => {
+      // Listen for auth state changes (handles session restore on reload)
+      sb.auth.onAuthStateChange(async (event, session) => {
+        if (session) {
+          currentUser = session.user;
+          await loadCheckinsFromSupabase();
+          showApp();
+        } else {
+          currentUser = null;
+          supabaseLoaded = false;
+          supabaseCheckins = [];
+          showAuthScreen();
+        }
+      });
+    });
+
+    function showApp() {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('user-email').textContent = currentUser.email;
       initSlider(document.getElementById('adherence'));
       initSlider(document.getElementById('motivation'));
       initVoice();
       checkStreakAlert();
       renderDashboard();
+    }
+
+    function showAuthScreen() {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+    }
+
+    let isSignupMode = false;
+
+    function toggleAuthMode(e) {
+      e.preventDefault();
+      isSignupMode = !isSignupMode;
+      document.getElementById('auth-mode-label').textContent =
+        isSignupMode ? 'Create your account' : 'Sign in to continue';
+      document.getElementById('auth-submit-btn').textContent =
+        isSignupMode ? 'CREATE ACCOUNT' : 'SIGN IN';
+      document.getElementById('auth-toggle-link').textContent =
+        isSignupMode ? 'Already have an account? Sign in' : 'Create Account';
+      document.getElementById('auth-error').classList.remove('active');
+    }
+
+    async function handleAuth() {
+      const email    = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const errorEl  = document.getElementById('auth-error');
+      const btn      = document.getElementById('auth-submit-btn');
+
+      errorEl.classList.remove('active');
+      btn.disabled = true;
+
+      try {
+        let result;
+        if (isSignupMode) {
+          result = await sb.auth.signUp({ email, password });
+        } else {
+          result = await sb.auth.signInWithPassword({ email, password });
+        }
+
+        if (result.error) throw result.error;
+
+        if (isSignupMode && !result.data.session) {
+          // Email confirmation required
+          errorEl.textContent = 'Check your email to confirm your account, then sign in.';
+          errorEl.style.color = '#2a6e3a';
+          errorEl.style.background = '#edf7f0';
+          errorEl.style.borderColor = '#2a7d3f';
+          errorEl.classList.add('active');
+        }
+        // onAuthStateChange will fire and call showApp() when session is established
+      } catch (err) {
+        errorEl.textContent = err.message || 'Authentication failed. Please try again.';
+        errorEl.style.color = '';
+        errorEl.style.background = '';
+        errorEl.style.borderColor = '';
+        errorEl.classList.add('active');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function handleSignOut(e) {
+      e.preventDefault();
+      await sb.auth.signOut();
+      // onAuthStateChange fires and calls showAuthScreen()
+    }
+
+    // Allow Enter key on auth inputs
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.getElementById('auth-screen').style.display !== 'none') {
+        handleAuth();
+      }
     });
+
+    // ── Supabase Data ─────────────────────────────────────────────────────────
+
+    async function loadCheckinsFromSupabase() {
+      if (!currentUser) return;
+      const { data, error } = await sb
+        .from('checkins')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('date', { ascending: false })
+        .limit(7);
+
+      if (error) { console.error('Supabase load error:', error); return; }
+
+      // Map Supabase columns to internal format (chronological order)
+      supabaseCheckins = (data || []).reverse().map(row => ({
+        date:       row.date,
+        weight:     row.current_weight_lbs,
+        adherence:  row.adherence_pct,
+        motivation: row.motivation_level,
+        status:     row.status,
+        summary:    row.result,
+      }));
+      supabaseLoaded = true;
+    }
+
+    async function saveCheckinToSupabase(entry) {
+      const { error } = await sb.from('checkins').insert({
+        user_id:                   currentUser.id,
+        date:                      entry.date,
+        goal_weight_lbs:           entry.goalWeight,
+        current_weight_lbs:        entry.weight,
+        days_in:                   entry.daysIn,
+        planned_daily_deficit_cals: entry.deficit,
+        adherence_pct:             entry.adherence,
+        motivation_level:          entry.motivation,
+        notes:                     entry.notes,
+        status:                    entry.status,
+        result:                    entry.summary,
+      });
+      if (error) console.error('Supabase save error:', error);
+    }
+
+    // ── Sliders ───────────────────────────────────────────────────────────────
 
     function initSlider(el) {
       const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
@@ -861,11 +1175,15 @@
         const parsed = parseResponse(data.result);
         render(parsed);
 
-        saveCheckin({
+        await saveCheckin({
           date:       new Date().toISOString().split('T')[0],
+          goalWeight: parseFloat(document.getElementById('goal-weight').value),
           weight:     parseFloat(document.getElementById('current-weight').value),
+          daysIn:     parseInt(document.getElementById('days-in').value),
+          deficit:    parseInt(document.getElementById('deficit').value),
           adherence:  parseInt(document.getElementById('adherence').value),
           motivation: parseInt(document.getElementById('motivation').value),
+          notes:      document.getElementById('notes').value.trim(),
           status:     parsed.statusWord,
           summary:    parsed.desc,
         });
@@ -970,21 +1288,35 @@
         .trim();
     }
 
-    // ── localStorage ─────────────────────────────────────────────────────────
+    // ── Storage — Supabase primary, localStorage fallback ────────────────────
 
     const STORAGE_KEY = 'momentum_checkins';
     const MAX_ENTRIES = 90;
 
     function loadCheckins() {
+      if (currentUser && supabaseLoaded) return supabaseCheckins;
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
       catch { return []; }
     }
 
-    function saveCheckin(entry) {
-      const history = loadCheckins();
-      history.push(entry);
-      if (history.length > MAX_ENTRIES) history.splice(0, history.length - MAX_ENTRIES);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    async function saveCheckin(entry) {
+      if (currentUser) {
+        await saveCheckinToSupabase(entry);
+        await loadCheckinsFromSupabase();
+      } else {
+        // localStorage fallback when not logged in
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        history.push({
+          date:       entry.date,
+          weight:     entry.weight,
+          adherence:  entry.adherence,
+          motivation: entry.motivation,
+          status:     entry.status,
+          summary:    entry.summary,
+        });
+        if (history.length > MAX_ENTRIES) history.splice(0, history.length - MAX_ENTRIES);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      }
     }
 
     // ── Streak Alert ─────────────────────────────────────────────────────────
