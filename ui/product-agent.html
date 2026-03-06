@@ -9,15 +9,15 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:         #f4f2ef;
-      --surface:    #eae7e1;
-      --border:     #d4d0c8;
-      --border-2:   #b0aca4;
-      --text:       #17161a;
-      --text-2:     #4c4946;
-      --text-3:     #9a9690;
-      --accent:     #c4790c;
-      --accent-dim: rgba(196, 121, 12, 0.1);
+      --bg:         #ffffff;
+      --surface:    #f5f5f5;
+      --border:     #e0e0e0;
+      --border-2:   #999999;
+      --text:       #111111;
+      --text-2:     #444444;
+      --text-3:     #888888;
+      --accent:     #d4600a;
+      --accent-dim: rgba(212, 96, 10, 0.08);
       --font:       -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     }
 
@@ -105,12 +105,13 @@
     .auth-box input[type="password"] {
       width: 100%;
       background: #fff;
-      border: 1px solid var(--border);
+      border: 1.5px solid #111111;
       color: var(--text);
       font-family: var(--font);
       font-size: 14px;
       padding: 13px 16px;
       outline: none;
+      border-radius: 0;
       transition: border-color 0.12s, box-shadow 0.12s;
       -webkit-appearance: none;
     }
@@ -271,15 +272,15 @@
     }
 
     .history-cards {
-      border: 1px solid var(--border);
-      background: var(--border);
+      border: 1px solid #e0e0e0;
+      background: #e0e0e0;
       display: flex;
       flex-direction: column;
       gap: 1px;
     }
 
     .history-card {
-      background: #fff;
+      background: #ffffff;
       padding: 14px 18px;
       display: grid;
       grid-template-columns: 64px 1fr auto;
@@ -342,7 +343,7 @@
     textarea {
       width: 100%;
       background: #fff;
-      border: 1px solid var(--border);
+      border: 1.5px solid #111111;
       color: var(--text);
       font-family: var(--font);
       font-size: 14px;
@@ -352,6 +353,7 @@
       min-height: 144px;      /* ~6 lines */
       overflow: hidden;
       outline: none;
+      border-radius: 0;
       transition: border-color 0.12s, box-shadow 0.12s;
       -webkit-appearance: none;
     }
@@ -371,9 +373,10 @@
     }
 
     .btn-analyze {
-      background: var(--text);
-      color: var(--bg);
+      background: #111111;
+      color: #ffffff;
       border: none;
+      border-radius: 0;
       font-family: var(--font);
       font-size: 10px;
       font-weight: 700;
@@ -470,16 +473,16 @@
     }
 
     .tldr-text {
-      font-size: 26px;
-      font-weight: 600;
+      font-size: 32px;
+      font-weight: 700;
       line-height: 1.3;
-      color: var(--text);
+      color: #111111;
       letter-spacing: -0.03em;
       max-width: 600px;
     }
 
     @media (max-width: 768px) {
-      .tldr-text { font-size: 21px; }
+      .tldr-text { font-size: 24px; }
     }
 
     /* Sections — two-column on desktop, single on mobile */
@@ -508,19 +511,19 @@
     .section-meta { padding-top: 1px; }
 
     .section-num {
-      font-size: 8px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.12em;
-      color: var(--text-3);
+      color: #999999;
       margin-bottom: 3px;
-      opacity: 0.6;
+      opacity: 1;
     }
 
     .section-title {
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.01em;
-      color: var(--text-2);
+      color: #111111;
     }
 
     /* Items */
@@ -581,13 +584,13 @@
     .prd-table {
       width: 100%;
       background: #fff;
-      border: 1px solid var(--border);
+      border: 1px solid #e0e0e0;
     }
 
     .prd-row {
       display: grid;
       grid-template-columns: 1fr;        /* stacked on mobile */
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid #e0e0e0;
     }
 
     @media (min-width: 769px) {
@@ -603,8 +606,8 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text-3);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      background: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
       display: flex;
       align-items: flex-start;
     }
@@ -612,7 +615,7 @@
     @media (min-width: 769px) {
       .prd-key {
         border-bottom: none;
-        border-right: 1px solid var(--border);
+        border-right: 1px solid #e0e0e0;
       }
     }
 
