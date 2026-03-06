@@ -47,7 +47,7 @@ ADJUSTED_PLAN:
 [Only include this section if STATUS is Drifting or Off track. Provide 2-3 specific, small adjustments to the plan for the next 7 days. Focus on behavior, not outcomes.]`;
 
 async function anthropicCall(apiKey, messages, system, maxTokens) {
-  const body = { model: 'claude-opus-4-5', max_tokens: maxTokens, messages };
+  const body = { model: 'claude-sonnet-4-5', max_tokens: maxTokens, messages };
   if (system) body.system = system;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
