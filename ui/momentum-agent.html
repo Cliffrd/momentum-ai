@@ -303,8 +303,8 @@
       background: linear-gradient(
         to right,
         var(--text) 0%,
-        var(--text) var(--fill, 80%),
-        var(--border) var(--fill, 80%),
+        var(--text) var(--fill, 50%),
+        var(--border) var(--fill, 50%),
         var(--border) 100%
       );
       border-radius: 4px;
@@ -772,6 +772,66 @@
       text-overflow: ellipsis;
       max-width: 100%;
     }
+
+    /* ── Mobile: 480px and under ── */
+    @media (max-width: 479px) {
+      /* Main container padding */
+      #app { padding-left: 16px; padding-right: 16px; }
+
+      /* Form inputs: full width, 16px min font to prevent iOS zoom */
+      input[type="number"],
+      textarea {
+        width: 100%;
+        font-size: 16px;
+      }
+
+      /* Sliders: full width, larger thumb for easy tapping */
+      input[type="range"] { width: 100%; }
+
+      input[type="range"]::-webkit-slider-thumb {
+        width: 28px;
+        height: 28px;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+      }
+
+      /* CHECK IN button: full width, min 52px tall */
+      button.primary {
+        width: 100%;
+        min-height: 52px;
+        padding: 16px 20px;
+      }
+
+      /* Status block: scale down large text gracefully */
+      .status-block {
+        padding: 24px 20px 20px;
+      }
+
+      .status-value {
+        font-size: 40px;
+      }
+
+      .status-desc {
+        font-size: 13px;
+      }
+
+      /* Dashboard sparklines already stack on mobile (grid-template-columns: 1fr) */
+      /* but ensure no overflow */
+      .db-charts { gap: 20px; }
+
+      /* YOUR PROGRESS / dashboard body readable */
+      .dashboard-body { padding-bottom: 36px; }
+
+      .db-entry-summary { font-size: 12px; }
+
+      /* Header readable at 320px */
+      header h1 { font-size: 32px; }
+
+      .header-email { max-width: 120px; }
+    }
   </style>
 </head>
 <body>
@@ -827,25 +887,25 @@
           <div class="field">
             <span class="field-label">Current Weight</span>
             <span class="field-sublabel">lbs</span>
-            <input type="number" id="current-weight" value="191" min="50" max="500" step="0.1">
+            <input type="number" id="current-weight" min="50" max="500" step="0.1">
           </div>
 
           <div class="field">
             <span class="field-label">Goal Weight</span>
             <span class="field-sublabel">lbs</span>
-            <input type="number" id="goal-weight" value="175" min="50" max="500" step="0.1">
+            <input type="number" id="goal-weight" min="50" max="500" step="0.1">
           </div>
 
           <div class="field">
             <span class="field-label">Days In</span>
             <span class="field-sublabel">since start</span>
-            <input type="number" id="days-in" value="19" min="1" max="365">
+            <input type="number" id="days-in" min="1" max="365">
           </div>
 
           <div class="field">
             <span class="field-label">Daily Deficit Target</span>
             <span class="field-sublabel">calories</span>
-            <input type="number" id="deficit" value="500" min="100" max="1000" step="50">
+            <input type="number" id="deficit" min="100" max="1000" step="50">
           </div>
 
           <div class="field full">
@@ -853,12 +913,12 @@
             <div class="slider-wrap">
               <div class="slider-header">
                 <span class="field-sublabel">% of days fully on plan</span>
-                <span class="slider-value" id="adherence-val">80%</span>
+                <span class="slider-value" id="adherence-val">50%</span>
               </div>
               <input
                 type="range"
                 id="adherence"
-                min="0" max="100" value="80"
+                min="0" max="100" value="50"
                 oninput="updateSlider(this, 'adherence-val', v => v + '%')"
               >
             </div>
@@ -869,12 +929,12 @@
             <div class="slider-wrap">
               <div class="slider-header">
                 <span class="field-sublabel">how you're feeling today</span>
-                <span class="slider-value" id="motivation-val">7/10</span>
+                <span class="slider-value" id="motivation-val">5/10</span>
               </div>
               <input
                 type="range"
                 id="motivation"
-                min="1" max="10" value="7"
+                min="1" max="10" value="5"
                 oninput="updateSlider(this, 'motivation-val', v => v + '/10')"
               >
             </div>
@@ -896,7 +956,7 @@
             <textarea
               id="notes"
               placeholder="What happened today? Be honest."
-            >Bounced back today. Hit the gym, ate on plan, drank water. Feeling more like myself.</textarea>
+            ></textarea>
           </div>
         </div>
 
