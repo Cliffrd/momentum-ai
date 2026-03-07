@@ -67,13 +67,25 @@ async function getDistinctUsers() {
   // Fetch all checkins ordered newest-first, then deduplicate by user_id.
   // Supabase doesn't support DISTINCT ON via the REST API without a view,
   // so we deduplicate in JS. This is fine for typical user counts.
-  const rows = await sbFetch('/checkins?select=user_id,email&order=created_at.desc');
+  const rows = await sbFetch('/checkins?select=user_id&order=created_at.desc');
   const seen = new Set();
   return rows.filter(r => {
     if (seen.has(r.user_id)) return false;
     seen.add(r.user_id);
     return true;
   });
+}
+
+async function getUserEmail(userId) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    headers: {
+      apikey:        SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+    },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.email ?? null;
 }
 
 async function getLastCheckins(userId, limit = 7) {
@@ -176,6 +188,7 @@ module.exports = async function handler(req, res) {
           continue;
         }
 
+        const email     = await getUserEmail(user.user_id);
         const latest    = checkins[0];
         const hours     = hoursSince(latest.created_at);
         const history   = formatHistory(checkins);
@@ -187,8 +200,8 @@ module.exports = async function handler(req, res) {
         const raw      = await askClaude(prompt);
         const decision = parseClaudeJson(raw);
 
-        if (decision.should_intervene && user.email) {
-          await sendEmail(user.email, decision.subject, decision.message);
+        if (decision.should_intervene && email) {
+          await sendEmail(email, decision.subject, decision.message);
           results.push({
             ...ctx,
             sent:  true,
