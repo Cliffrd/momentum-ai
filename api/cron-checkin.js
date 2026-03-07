@@ -43,7 +43,7 @@ Respond in JSON only — no markdown fences, no extra text:
 
 Rules:
 - If checked in today and status is On Track: should_intervene false
-- If no check-in in 24+ hours: should_intervene true, type missed_checkin
+- If no check-in in 9+ hours: should_intervene true, type missed_checkin
 - If 2 or more of the last check-ins are Drifting or Off Track: should_intervene true, type drift_pattern
 - If 3+ consecutive On Track check-ins and no encouragement sent this week: should_intervene true, type encouragement
 - Otherwise: should_intervene false
