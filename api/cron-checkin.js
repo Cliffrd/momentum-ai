@@ -152,7 +152,7 @@ module.exports = async function handler(req, res) {
   if (CRON_SECRET && req.headers['authorization'] !== `Bearer ${CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
