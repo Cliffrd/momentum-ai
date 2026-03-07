@@ -20,7 +20,6 @@ const SUPABASE_KEY     = process.env.SUPABASE_SERVICE_KEY;
 const ANTHROPIC_KEY    = process.env.ANTHROPIC_API_KEY;
 const RESEND_KEY       = process.env.RESEND_API_KEY;
 const CRON_SECRET      = process.env.CRON_SECRET;
-const FROM_EMAIL       = 'Momentum <onboarding@resend.dev>';
 
 // ─── Prompt ────────────────────────────────────────────────────────────────
 
@@ -127,7 +126,7 @@ async function sendEmail(to, subject, text) {
       'Content-Type':  'application/json',
       'Authorization': `Bearer ${RESEND_KEY}`,
     },
-    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, text }),
+    body: JSON.stringify({ from: 'onboarding@resend.dev', to: [to], subject, text }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
