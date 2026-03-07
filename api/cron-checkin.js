@@ -20,7 +20,7 @@ const SUPABASE_KEY     = process.env.SUPABASE_SERVICE_KEY;
 const ANTHROPIC_KEY    = process.env.ANTHROPIC_API_KEY;
 const RESEND_KEY       = process.env.RESEND_API_KEY;
 const CRON_SECRET      = process.env.CRON_SECRET;
-const FROM_EMAIL       = 'Momentum <accountability@momentum-ai.app>';
+const FROM_EMAIL       = 'Momentum <onboarding@resend.dev>';
 
 // ─── Prompt ────────────────────────────────────────────────────────────────
 
