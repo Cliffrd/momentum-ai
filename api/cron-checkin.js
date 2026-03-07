@@ -200,7 +200,7 @@ module.exports = async function handler(req, res) {
         const decision = parseClaudeJson(raw);
 
         if (decision.should_intervene && email) {
-          await sendEmail(email, decision.subject, decision.message);
+          await sendEmail('cliffbarrett@gmail.com', decision.subject, decision.message);
           results.push({
             ...ctx,
             sent:  true,
