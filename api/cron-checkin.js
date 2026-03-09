@@ -1,13 +1,13 @@
 // api/cron-checkin.js
 // Vercel Cron Job — proactive accountability agent for Momentum.
-// Runs on schedule defined in vercel.json. Vercel sends GET requests to cron paths.
+//
+// Three cron triggers (set in vercel.json):
+//   9am UTC  — morning check-in prompt (personalized to last entry)
+//   12pm UTC — escalation nudge if no check-in yet today
+//   6pm UTC  — streak at risk alert if streak active but no check-in today
 //
 // Required env vars:
-//   ANTHROPIC_API_KEY     — Anthropic API key
-//   RESEND_API_KEY        — Resend email API key
-//   SUPABASE_URL          — https://knedestzrnprdfqwjtow.supabase.co
-//   SUPABASE_SERVICE_KEY  — Supabase service role key (bypasses RLS)
-//   CRON_SECRET           — Arbitrary secret; set in Vercel env and in cron auth header
+//   ANTHROPIC_API_KEY, RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, CRON_SECRET
 
 const SUPABASE_URL  = process.env.SUPABASE_URL || 'https://knedestzrnprdfqwjtow.supabase.co';
 const SUPABASE_KEY  = process.env.SUPABASE_SERVICE_KEY;
@@ -15,34 +15,68 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const RESEND_KEY    = process.env.RESEND_API_KEY;
 const CRON_SECRET   = process.env.CRON_SECRET;
 
-// ─── Prompt ────────────────────────────────────────────────────────────────
+// ─── Prompts ────────────────────────────────────────────────────────────────
 
-const INTERVENTION_PROMPT = `You are a proactive accountability partner. Review this user's check-in history and decide if they need an intervention today.
+const MORNING_PROMPT = `You are a proactive accountability partner sending a morning check-in prompt.
 
-History:
-{last_7_checkins}
+User's last check-in: {last_checkin}
 
-Last check-in was {hours_since} hours ago. Current streak: {current_streak} consecutive On Track days. Longest streak ever: {longest_streak} days.
+Current streak: {current_streak} consecutive On Track days. Longest streak ever: {longest_streak} days. Last check-in was {hours_since} hours ago.
 
-Respond in JSON only — no markdown fences, no extra text:
+Write a short, personal morning message (2-3 sentences max) that:
+- Opens with one specific detail from their last check-in (weight, what they did, or their note)
+- Sets up today with one concrete focus
+- Feels like a message from someone who was paying attention, not a template
+
+Respond in JSON only — no markdown fences:
 {
-  "should_intervene": true,
-  "reason": "one sentence why",
-  "intervention_type": "gentle_nudge" | "missed_checkin" | "drift_pattern" | "encouragement" | "milestone",
-  "subject": "email subject line",
-  "message": "personal 2-3 sentence email body"
+  "subject": "email subject line — conversational, specific, never generic",
+  "message": "2-3 sentence email body"
 }
 
 Rules:
-- If checked in today and status is On Track and streak < 3: should_intervene false
-- If no check-in in 9+ hours: should_intervene true, type missed_checkin
-- If 2 or more of the last check-ins are Drifting or Off Track: should_intervene true, type drift_pattern
-- If current_streak is exactly 3, 7, 14, 21, or 30: should_intervene true, type milestone — celebrate it specifically
-- If 3+ consecutive On Track check-ins and no encouragement sent this week: should_intervene true, type encouragement
-- Otherwise: should_intervene false
-- Message tone: warm, direct, non-shaming. Reference specific numbers from their history.
-- For milestone messages: be direct and specific about the streak number. No hollow cheerleading.
-- Subject line: conversational, never salesy or robotic.`;
+- Reference their actual numbers or activities from the last check-in
+- Never say 'Great job' or 'Keep it up' or any hollow phrase
+- Subject line should feel like it came from a person, not an app
+- Tone: warm, direct, like a coach who remembers everything`;
+
+const ESCALATION_PROMPT = `You are a proactive accountability partner. The user has not checked in today.
+
+Their recent history: {last_checkin}
+
+Current streak: {current_streak} days on track. It is now midday. They haven't checked in yet.
+
+Write a short midday nudge (1-2 sentences) that creates mild urgency without shaming. Reference their streak if it's 2 or more days.
+
+Respond in JSON only — no markdown fences:
+{
+  "subject": "email subject line",
+  "message": "1-2 sentence nudge"
+}
+
+Rules:
+- Short and direct — this is a nudge, not a coaching session
+- Never shame or guilt trip
+- If streak >= 2, mention it specifically
+- Tone: like a training partner checking in, not a notification`;
+
+const STREAK_AT_RISK_PROMPT = `You are a proactive accountability partner. It is late in the day and the user has not checked in.
+
+Current streak: {current_streak} consecutive On Track days. Longest streak ever: {longest_streak} days. Last check-in: {last_checkin_summary}
+
+Write a streak protection message (2 sentences max). Be direct about the streak being at risk. Make it feel urgent but not dramatic.
+
+Respond in JSON only — no markdown fences:
+{
+  "subject": "email subject line",
+  "message": "2 sentence message"
+}
+
+Rules:
+- Name the streak number explicitly
+- One sentence on what's at stake, one sentence on what to do right now
+- Never say 'don't forget' or 'just a reminder'
+- Tone: direct, caring, zero fluff`;
 
 // ─── Supabase helpers ───────────────────────────────────────────────────────
 
@@ -123,6 +157,30 @@ function computeLongestStreak(checkins) {
   return longest;
 }
 
+function checkedInToday(checkins) {
+  const today = new Date().toISOString().split('T')[0];
+  return checkins.some(c => c.date === today);
+}
+
+function formatLastCheckin(c) {
+  return `Date: ${c.date} | Status: ${c.status || 'unknown'} | Weight: ${c.current_weight_lbs}lb | ` +
+    `Adherence: ${c.adherence_pct}% | Motivation: ${c.motivation_level}/10 | Notes: "${c.notes}"`;
+}
+
+function hoursSince(isoTimestamp) {
+  return Math.floor((Date.now() - new Date(isoTimestamp).getTime()) / 36e5);
+}
+
+// ─── Detect cron trigger type from current UTC hour ─────────────────────────
+
+function getTriggerType() {
+  const hour = new Date().getUTCHours();
+  if (hour >= 8 && hour < 11)  return 'morning';
+  if (hour >= 11 && hour < 15) return 'escalation';
+  if (hour >= 17)              return 'streak_at_risk';
+  return 'morning'; // fallback
+}
+
 // ─── Claude helper ──────────────────────────────────────────────────────────
 
 async function askClaude(prompt) {
@@ -165,23 +223,72 @@ async function sendEmail(to, subject, text) {
   return res.json();
 }
 
-// ─── Utilities ──────────────────────────────────────────────────────────────
-
-function hoursSince(isoTimestamp) {
-  return Math.floor((Date.now() - new Date(isoTimestamp).getTime()) / 36e5);
-}
-
-function formatHistory(checkins) {
-  return checkins.map((c, i) =>
-    `[${i + 1}] ${c.date} | Status: ${c.status || 'unknown'} | ` +
-    `Weight: ${c.current_weight_lbs}lb | Adherence: ${c.adherence_pct}% | ` +
-    `Motivation: ${c.motivation_level}/10 | Notes: "${c.notes}"`
-  ).join('\n');
-}
-
 function parseClaudeJson(raw) {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
   return JSON.parse(cleaned);
+}
+
+function streakFooter(currentStreak, longestStreak) {
+  if (currentStreak === 0) return '';
+  const pb = longestStreak > currentStreak
+    ? ` | Personal best: ${longestStreak} days`
+    : ' — new personal best!';
+  return `\n\n---\nStreak: ${currentStreak} day${currentStreak === 1 ? '' : 's'} on track${pb}`;
+}
+
+// ─── Per-trigger logic ──────────────────────────────────────────────────────
+
+async function handleMorning(checkins, currentStreak, longestStreak) {
+  // Always send morning email — it's personalized to last check-in
+  const latest = checkins[0];
+  const hours  = hoursSince(latest.created_at);
+
+  const prompt = MORNING_PROMPT
+    .replace('{last_checkin}',    formatLastCheckin(latest))
+    .replace('{current_streak}',  String(currentStreak))
+    .replace('{longest_streak}',  String(longestStreak))
+    .replace('{hours_since}',     String(hours));
+
+  const raw      = await askClaude(prompt);
+  const decision = parseClaudeJson(raw);
+  return { should_send: true, ...decision };
+}
+
+async function handleEscalation(checkins, currentStreak) {
+  // Only send if no check-in today
+  if (checkedInToday(checkins)) {
+    return { should_send: false, reason: 'already checked in today' };
+  }
+  const latest = checkins[0];
+  const prompt = ESCALATION_PROMPT
+    .replace('{last_checkin}',   formatLastCheckin(latest))
+    .replace('{current_streak}', String(currentStreak));
+
+  const raw      = await askClaude(prompt);
+  const decision = parseClaudeJson(raw);
+  return { should_send: true, ...decision };
+}
+
+async function handleStreakAtRisk(checkins, currentStreak, longestStreak) {
+  // Only send if streak is active (2+ days) and no check-in today
+  if (currentStreak < 2) {
+    return { should_send: false, reason: 'streak too short to protect' };
+  }
+  if (checkedInToday(checkins)) {
+    return { should_send: false, reason: 'already checked in today' };
+  }
+
+  const latest  = checkins[0];
+  const summary = `${latest.current_weight_lbs}lb on ${latest.date}, status: ${latest.status}`;
+
+  const prompt = STREAK_AT_RISK_PROMPT
+    .replace('{current_streak}',      String(currentStreak))
+    .replace('{longest_streak}',      String(longestStreak))
+    .replace('{last_checkin_summary}', summary);
+
+  const raw      = await askClaude(prompt);
+  const decision = parseClaudeJson(raw);
+  return { should_send: true, ...decision };
 }
 
 // ─── Handler ────────────────────────────────────────────────────────────────
@@ -200,13 +307,18 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: `Missing env vars: ${missing.join(', ')}` });
   }
 
+  // Allow manual override of trigger type via query param for testing
+  // e.g. /api/cron-checkin?trigger=escalation
+  const triggerOverride = req.query?.trigger;
+  const triggerType     = triggerOverride || getTriggerType();
+
   const results = [];
 
   try {
     const users = await getDistinctUsers();
 
     for (const user of users) {
-      const ctx = { user_id: user.user_id };
+      const ctx = { user_id: user.user_id, trigger: triggerType };
       try {
         const checkins = await getLastCheckins(user.user_id, 20);
         if (checkins.length === 0) {
@@ -215,41 +327,35 @@ module.exports = async function handler(req, res) {
         }
 
         const email         = await getUserEmail(user.user_id);
-        const latest        = checkins[0];
-        const hours         = hoursSince(latest.created_at);
-        const history       = formatHistory(checkins.slice(0, 7));
         const currentStreak = computeCurrentStreak(checkins);
         const longestStreak = computeLongestStreak(checkins);
 
-        const prompt = INTERVENTION_PROMPT
-          .replace('{last_7_checkins}', history)
-          .replace('{hours_since}',     String(hours))
-          .replace('{current_streak}',  String(currentStreak))
-          .replace('{longest_streak}',  String(longestStreak));
+        let decision;
+        if (triggerType === 'morning') {
+          decision = await handleMorning(checkins, currentStreak, longestStreak);
+        } else if (triggerType === 'escalation') {
+          decision = await handleEscalation(checkins, currentStreak);
+        } else if (triggerType === 'streak_at_risk') {
+          decision = await handleStreakAtRisk(checkins, currentStreak, longestStreak);
+        } else {
+          decision = await handleMorning(checkins, currentStreak, longestStreak);
+        }
 
-        const raw      = await askClaude(prompt);
-        const decision = parseClaudeJson(raw);
-
-        if (decision.should_intervene && email) {
-          const streakFooter = currentStreak > 0
-            ? `\n\n---\nCurrent streak: ${currentStreak} day${currentStreak === 1 ? '' : 's'} on track${longestStreak > currentStreak ? ` | Personal best: ${longestStreak} days` : ' — new personal best!'}`
-            : '';
-
-          await sendEmail('cliffbarrett@gmail.com', decision.subject, decision.message + streakFooter);
+        if (decision.should_send && email) {
+          const footer = streakFooter(currentStreak, longestStreak);
+          await sendEmail('cliffbarrett@gmail.com', decision.subject, decision.message + footer);
           results.push({
             ...ctx,
             sent:           true,
-            type:           decision.intervention_type,
-            reason:         decision.reason,
+            subject:        decision.subject,
             current_streak: currentStreak,
             longest_streak: longestStreak,
           });
         } else {
           results.push({
             ...ctx,
-            sent:           false,
-            reason:         decision.reason,
-            current_streak: currentStreak,
+            sent:   false,
+            reason: decision.reason || 'no intervention needed',
           });
         }
       } catch (err) {
@@ -257,7 +363,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ processed: users.length, results });
+    return res.status(200).json({ trigger: triggerType, processed: users.length, results });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

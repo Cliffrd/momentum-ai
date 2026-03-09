@@ -5,6 +5,17 @@
     { "source": "/", "destination": "/product-agent.html" }
   ],
   "crons": [
-    { "path": "/api/cron-checkin", "schedule": "0 9 * * *" }
+    {
+      "path": "/api/cron-checkin",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron-checkin",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron-checkin",
+      "schedule": "0 18 * * *"
+    }
   ]
 }
