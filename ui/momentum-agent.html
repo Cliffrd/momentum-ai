@@ -1560,13 +1560,27 @@
       return 'on-track';
     }
 
-    function renderDashboard() {
+    async function renderDashboard() {
       const history = loadCheckins();
       const body    = document.getElementById('dashboard-body');
 
       if (history.length === 0) {
         body.innerHTML = '<p class="db-empty">No check-ins yet — complete your first check-in to see progress here.</p>';
         return;
+      }
+
+      // Fetch server-side streak data (longest streak, milestone message)
+      let longestStreak = 0;
+      let streakMessage = null;
+      try {
+        const streakRes = await fetch('/api/streak');
+        if (streakRes.ok) {
+          const streakData = await streakRes.json();
+          longestStreak = streakData.longest_streak || 0;
+          streakMessage = streakData.streak_message || null;
+        }
+      } catch (e) {
+        // Fail silently — local streak still renders
       }
 
       const streak = countStreak(history);
@@ -1588,6 +1602,14 @@
       } else {
         streakLabel = 'No current streak';
       }
+
+      const longestStreakHTML = longestStreak > 0
+        ? `<div style="margin-top:8px"><span class="db-stat-label">Personal Best</span><div class="db-streak-val" style="font-size:16px">${longestStreak} day${longestStreak === 1 ? '' : 's'}</div></div>`
+        : '';
+
+      const streakMessageHTML = streakMessage
+        ? `<div style="margin-top:10px;font-size:13px;color:var(--green);font-weight:500">${streakMessage}</div>`
+        : '';
 
       const weightChart = weights.length >= 2
         ? sparklineSVG(weights, '#1b5c2e')
@@ -1614,6 +1636,8 @@
         <div class="db-streak-wrap">
           <div class="db-stat-label">Current Streak</div>
           <div class="db-streak-val ${streakExtra}">${streakLabel}</div>
+          ${longestStreakHTML}
+          ${streakMessageHTML}
         </div>
         <div class="db-charts">
           <div class="db-chart">
